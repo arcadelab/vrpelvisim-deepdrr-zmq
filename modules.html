@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>PelvisVR Server &#8212; PelvisVR Server  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="deepdrrzmq package" href="deepdrrzmq.html" />
+    <link rel="prev" title="PelvisVR Server Documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pelvisvr-server">
+<h1>PelvisVR Server<a class="headerlink" href="#pelvisvr-server" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deepdrrzmq.html">deepdrrzmq package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.devices.html">deepdrrzmq.devices package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.devices.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.devices.html#module-deepdrrzmq.devices.SimpleDevice">deepdrrzmq.devices.SimpleDevice module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.devices.html#module-deepdrrzmq.devices">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.utils.html">deepdrrzmq.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils.drr_util">deepdrrzmq.utils.drr_util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils.server_util">deepdrrzmq.utils.server_util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils.timer_util">deepdrrzmq.utils.timer_util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils.typer_util">deepdrrzmq.utils.typer_util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils.zmq_util">deepdrrzmq.utils.zmq_util module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.utils.html#module-deepdrrzmq.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.basedir">deepdrrzmq.basedir module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.deepdrrd">deepdrrzmq.deepdrrd module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer.__init__"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer.handle_project_request"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer.handle_project_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer.handle_projector_params_response"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer.handle_projector_params_response()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer.project_server"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer.project_server()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.DeepDRRServer.start"><code class="docutils literal notranslate"><span class="pre">DeepDRRServer.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.capnp_optional"><code class="docutils literal notranslate"><span class="pre">capnp_optional()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.capnp_square_matrix"><code class="docutils literal notranslate"><span class="pre">capnp_square_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.mesh_msg_to_volume"><code class="docutils literal notranslate"><span class="pre">mesh_msg_to_volume()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.deepdrrd.nifti_msg_to_volume"><code class="docutils literal notranslate"><span class="pre">nifti_msg_to_volume()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.loggerd">deepdrrzmq.loggerd module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder"><code class="docutils literal notranslate"><span class="pre">LogRecorder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.__init__"><code class="docutils literal notranslate"><span class="pre">LogRecorder.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.close"><code class="docutils literal notranslate"><span class="pre">LogRecorder.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.finish"><code class="docutils literal notranslate"><span class="pre">LogRecorder.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.new_session"><code class="docutils literal notranslate"><span class="pre">LogRecorder.new_session()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.stop_session"><code class="docutils literal notranslate"><span class="pre">LogRecorder.stop_session()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogRecorder.write"><code class="docutils literal notranslate"><span class="pre">LogRecorder.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter"><code class="docutils literal notranslate"><span class="pre">LogShardWriter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter.__init__"><code class="docutils literal notranslate"><span class="pre">LogShardWriter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter.close"><code class="docutils literal notranslate"><span class="pre">LogShardWriter.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter.finish"><code class="docutils literal notranslate"><span class="pre">LogShardWriter.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter.next_stream"><code class="docutils literal notranslate"><span class="pre">LogShardWriter.next_stream()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogShardWriter.write"><code class="docutils literal notranslate"><span class="pre">LogShardWriter.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogWriter"><code class="docutils literal notranslate"><span class="pre">LogWriter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogWriter.__init__"><code class="docutils literal notranslate"><span class="pre">LogWriter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogWriter.close"><code class="docutils literal notranslate"><span class="pre">LogWriter.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LogWriter.write"><code class="docutils literal notranslate"><span class="pre">LogWriter.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LoggerServer"><code class="docutils literal notranslate"><span class="pre">LoggerServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LoggerServer.__init__"><code class="docutils literal notranslate"><span class="pre">LoggerServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LoggerServer.logger_server"><code class="docutils literal notranslate"><span class="pre">LoggerServer.logger_server()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LoggerServer.start"><code class="docutils literal notranslate"><span class="pre">LoggerServer.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.LoggerServer.status_server"><code class="docutils literal notranslate"><span class="pre">LoggerServer.status_server()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.loggerd.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.logreplay">deepdrrzmq.logreplay module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.logreplay.LoggerServer"><code class="docutils literal notranslate"><span class="pre">LoggerServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.logreplay.LoggerServer.__init__"><code class="docutils literal notranslate"><span class="pre">LoggerServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.logreplay.LoggerServer.logger_server"><code class="docutils literal notranslate"><span class="pre">LoggerServer.logger_server()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.logreplay.LoggerServer.start"><code class="docutils literal notranslate"><span class="pre">LoggerServer.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.logreplay.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.manager">deepdrrzmq.manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.manager.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.manager.manager_cleanup"><code class="docutils literal notranslate"><span class="pre">manager_cleanup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.manager.manager_prepare"><code class="docutils literal notranslate"><span class="pre">manager_prepare()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.manager.manager_thread"><code class="docutils literal notranslate"><span class="pre">manager_thread()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.patientloaderd">deepdrrzmq.patientloaderd module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer.__init__"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer.handle_patient_annotation_request"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer.handle_patient_annotation_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer.handle_patient_mesh_request"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer.handle_patient_mesh_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer.project_server"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer.project_server()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.PatientLoaderServer.start"><code class="docutils literal notranslate"><span class="pre">PatientLoaderServer.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.patientloaderd.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.printd">deepdrrzmq.printd module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.printd.PrintServer"><code class="docutils literal notranslate"><span class="pre">PrintServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.printd.PrintServer.__init__"><code class="docutils literal notranslate"><span class="pre">PrintServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.printd.PrintServer.start"><code class="docutils literal notranslate"><span class="pre">PrintServer.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.printd.PrintServer.time_server"><code class="docutils literal notranslate"><span class="pre">PrintServer.time_server()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.printd.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.process">deepdrrzmq.process module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess"><code class="docutils literal notranslate"><span class="pre">ManagerProcess</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.check_watchdog"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.check_watchdog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.daemon"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.daemon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.enabled"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.enabled</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.last_watchdog_time"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.last_watchdog_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.name"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.prepare"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.prepare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.proc"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.proc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.restart"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.restart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.shutting_down"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.shutting_down</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.sigkill"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.sigkill</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.signal"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.signal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.start"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.stop"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.stop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.unkillable"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.unkillable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.watchdog_max_dt"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.watchdog_max_dt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ManagerProcess.watchdog_seen"><code class="docutils literal notranslate"><span class="pre">ManagerProcess.watchdog_seen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.NativeProcess"><code class="docutils literal notranslate"><span class="pre">NativeProcess</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.NativeProcess.__init__"><code class="docutils literal notranslate"><span class="pre">NativeProcess.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.NativeProcess.prepare"><code class="docutils literal notranslate"><span class="pre">NativeProcess.prepare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.NativeProcess.start"><code class="docutils literal notranslate"><span class="pre">NativeProcess.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.PythonProcess"><code class="docutils literal notranslate"><span class="pre">PythonProcess</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.PythonProcess.__init__"><code class="docutils literal notranslate"><span class="pre">PythonProcess.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.PythonProcess.prepare"><code class="docutils literal notranslate"><span class="pre">PythonProcess.prepare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.PythonProcess.start"><code class="docutils literal notranslate"><span class="pre">PythonProcess.start()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.ensure_running"><code class="docutils literal notranslate"><span class="pre">ensure_running()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.join_process"><code class="docutils literal notranslate"><span class="pre">join_process()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.launcher"><code class="docutils literal notranslate"><span class="pre">launcher()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.process.nativelauncher"><code class="docutils literal notranslate"><span class="pre">nativelauncher()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.timed">deepdrrzmq.timed module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.timed.TimeServer"><code class="docutils literal notranslate"><span class="pre">TimeServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.timed.TimeServer.__init__"><code class="docutils literal notranslate"><span class="pre">TimeServer.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.timed.TimeServer.start"><code class="docutils literal notranslate"><span class="pre">TimeServer.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.timed.TimeServer.time_server"><code class="docutils literal notranslate"><span class="pre">TimeServer.time_server()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.timed.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq.zmqproxyd">deepdrrzmq.zmqproxyd module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deepdrrzmq.html#deepdrrzmq.zmqproxyd.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html#module-deepdrrzmq">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PelvisVR Server</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PelvisVR Server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deepdrrzmq.html">deepdrrzmq package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">PelvisVR Server Documentation</a></li>
+      <li>Next: <a href="deepdrrzmq.html" title="next chapter">deepdrrzmq package</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023 ARCADE Lab.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="_sources/modules.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
