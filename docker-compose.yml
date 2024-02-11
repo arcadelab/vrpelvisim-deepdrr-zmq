@@ -1,7 +1,8 @@
 version: "3.9"
 services:
   deepdrrzmq:
-    image: ghcr.io/pelvisvr/deepdrr_zmq:master
+    image: ghcr.io/arcadelab/pelvisvr-deepdrr-zmq:main
+    # image: ghcr.io/pelvisvr/deepdrr_zmq:master
     restart: unless-stopped
     ports:
       - "40100:40100"
