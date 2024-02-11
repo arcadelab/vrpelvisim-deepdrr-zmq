@@ -8,19 +8,19 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     build-essential \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+    git
+    # && rm -rf /var/lib/apt/lists/*
 
 # RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 build-essential git -y
 
-RUN conda install -c conda-forge pycuda -y && \
-    conda clean -a -y
+RUN conda install -c conda-forge pycuda -y
+    # && conda clean -a -y
 
 # RUN conda install -c conda-forge pycuda -y
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt && \
-    rm -rf /root/.cache/pip
+RUN pip install -r requirements.txt
+    # && rm -rf /root/.cache/pip
 # RUN pip install -r requirements.txt
 
 COPY . .

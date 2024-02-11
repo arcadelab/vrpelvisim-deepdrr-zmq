@@ -1,4 +1,5 @@
-name: deepdrr_zmq
+# name: deepdrr_zmq
+name: pelvisvr-deepdrr-zmq
 channels:
   - pytorch
   - nvidia
