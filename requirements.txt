@@ -1,0 +1,7 @@
+git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
+pyzmq
+pycapnp
+typer
+scipy
+joblib
+more_itertools

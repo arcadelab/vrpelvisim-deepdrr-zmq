@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  deepdrrzmq:
+    image: ghcr.io/pelvisvr/deepdrr_zmq:master
+    restart: unless-stopped
+    ports:
+      - "40100:40100"
+      - "40101:40101"
+      - "40102:40102"
+    environment:
+      - PATIENT_DATA_DIR=/patientdata
+      - LOG_DIR=/logdata
+      - DEEPDRR_DATA_DIR=/deepdrrcache
+    # depends_on:
+    #   - pyradonc
+    #   - usdzconvert
+    volumes:
+      # Patient data
+      - type: bind
+        source: ${DOCKER_PATIENT_DATA_DIR}
+        target: /patientdata
+        read_only: true
+      - type: bind
+        source: ${DOCKER_LOG_DIR}
+        target: /logdata
+        read_only: false
+      # DeepDRR Cache Volume
+      - type: volume
+        source: deepdrrcache
+        target: /deepdrrcache
+        read_only: false
+    pull_policy: build
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+volumes:
+  deepdrrcache:
+    driver: local

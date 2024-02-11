@@ -1,0 +1,28 @@
+name: deepdrr_zmq
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pytorch
+  - torchvision
+  - pytorch-cuda=11.7
+  - cudatoolkit-dev=11.7
+  - pycuda
+  - sphinx
+  - pip
+  - pip:
+      - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
+      # - deepdrr==1.1.2
+      - pyzmq
+      - pycapnp
+      - typer
+      - scipy
+      - joblib
+      - pipenv
+      - tqdm
+      - ipywidgets
+      - jupyter
+      - more_itertools
+      
