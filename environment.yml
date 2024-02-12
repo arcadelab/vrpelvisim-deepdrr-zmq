@@ -14,7 +14,8 @@ dependencies:
   - sphinx
   - pip
   - pip:
-      - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
+      - git+https://github.com/arcadelab/deepdrr.git@main
+      # - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
       # - deepdrr==1.1.2
       - pyzmq
       - pycapnp
