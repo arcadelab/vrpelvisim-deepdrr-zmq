@@ -9,14 +9,11 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     build-essential \
     git
-    # && rm -rf /var/lib/apt/lists/*
 
 RUN conda install -c conda-forge pycuda -y
-    # && conda clean -a -y
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-    # && rm -rf /root/.cache/pip
 
 COPY . .
 
