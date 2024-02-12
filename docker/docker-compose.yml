@@ -32,7 +32,7 @@ services:
     pull_policy: build
     build:
       context: ../
-      dockerfile: docker/Dockerfile
+      dockerfile: ./Dockerfile
     deploy:
       resources:
         reservations:
