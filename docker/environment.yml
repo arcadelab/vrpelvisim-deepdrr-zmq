@@ -1,4 +1,3 @@
-# name: deepdrr_zmq
 name: pelvisvr-deepdrr-zmq
 channels:
   - pytorch
@@ -15,7 +14,6 @@ dependencies:
   - pip
   - pip:
       - git+https://github.com/arcadelab/deepdrr.git@main
-      # - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
       # - deepdrr==1.1.2
       - pyzmq
       - pycapnp
@@ -27,4 +25,3 @@ dependencies:
       - ipywidgets
       - jupyter
       - more_itertools
-      
