@@ -43,8 +43,8 @@ jobs:
       # Reference: https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
       - name: Free Disk Space
         run: |
-          chmod +x ./docker/free_disk_space.sh
-          ./docker/free_disk_space.sh
+          chmod +x ./scripts/free_disk_space.sh
+          ./scripts/free_disk_space.sh
 
       # Set up Docker Buildx
       # Reference: https://github.com/docker/setup-buildx-action
