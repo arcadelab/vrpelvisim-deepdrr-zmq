@@ -9,8 +9,8 @@ handle requests from the client.
 import signal
 import zmq
 
-XSUB_PORT = 40101
-XPUB_PORT = 40102
+XSUB_PORT = 40121
+XPUB_PORT = 40122
 
 def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)

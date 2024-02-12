@@ -19,6 +19,6 @@ COPY . .
 
 CMD ["python", "-m", "deepdrrzmq.manager"]
 
-EXPOSE 40100/tcp
-EXPOSE 40101/tcp
-EXPOSE 40102/tcp
+EXPOSE 40120/tcp
+EXPOSE 40121/tcp
+EXPOSE 40122/tcp

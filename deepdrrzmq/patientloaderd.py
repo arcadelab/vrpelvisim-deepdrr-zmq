@@ -169,9 +169,9 @@ class PatientLoaderServer:
 @unwrap_typer_param
 def main(
         # ip=typer.Argument('localhost', help="ip address of the receiver"),
-        rep_port=typer.Argument(40100),
-        pub_port=typer.Argument(40101),
-        sub_port=typer.Argument(40102),
+        rep_port=typer.Argument(40120),
+        pub_port=typer.Argument(40121),
+        sub_port=typer.Argument(40122),
         # bind=typer.Option(True, help="bind to the port instead of connecting to it"),
 ):
 

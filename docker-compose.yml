@@ -4,9 +4,9 @@ services:
     image: ghcr.io/arcadelab/pelvisvr-deepdrr-zmq:main
     restart: unless-stopped
     ports:
-      - "40100:40100"
-      - "40101:40101"
-      - "40102:40102"
+      - "40120:40120"
+      - "40121:40121"
+      - "40122:40122"
     environment:
       - PATIENT_DATA_DIR=/patientdata
       - LOG_DIR=/logdata

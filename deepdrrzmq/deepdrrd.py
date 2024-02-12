@@ -410,9 +410,9 @@ class DeepDRRServer:
 @app.command()
 @unwrap_typer_param
 def main(
-        rep_port=typer.Argument(40100),
-        pub_port=typer.Argument(40101),
-        sub_port=typer.Argument(40102),
+        rep_port=typer.Argument(40120),
+        pub_port=typer.Argument(40121),
+        sub_port=typer.Argument(40122),
 ):
 
     # print arguments
