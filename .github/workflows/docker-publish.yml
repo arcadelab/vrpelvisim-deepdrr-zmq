@@ -47,10 +47,10 @@ jobs:
           ./scripts/free_disk_space.sh
 
       # Set up Docker Buildx
-      # Reference: https://github.com/docker/build-push-action
+      # Reference: https://github.com/docker/setup-buildx-action
       # Workaround: https://github.com/docker/build-push-action/issues/461
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v5
+        uses: docker/setup-buildx-action@v3
 
       # Login to GitHub Container Registry
       # Except on PR
