@@ -1,4 +1,4 @@
-git+https://github.com/arcadelab/deepdrr.git@main
+git+https://github.com/arcadelab/deepdrr.git@dev
 pyzmq
 pycapnp
 typer
