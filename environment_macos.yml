@@ -1,7 +1,7 @@
 name: pelvisvr-deepdrr-zmq
 channels:
   - pytorch
-  - "nvidia/label/cuda-12.3.2"
+  - "nvidia/label/cuda-11.8.0"
   - conda-forge
 dependencies:
   - python=3.10
@@ -10,7 +10,7 @@ dependencies:
   - pip
   - pip:
       # - deepdrr
-      - cupy-cuda12x
+      - cupy-cuda11x
       - pyzmq
       - pycapnp
       - typer
