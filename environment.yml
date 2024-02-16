@@ -15,6 +15,7 @@ dependencies:
   - pip
   - pip:
       - git+https://github.com/arcadelab/deepdrr.git@dev
+      - cupy-cuda12x
       - pyzmq
       - pycapnp
       - typer

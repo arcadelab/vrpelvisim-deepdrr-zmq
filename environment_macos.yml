@@ -10,6 +10,7 @@ dependencies:
   - pip
   - pip:
       # - deepdrr
+      - cupy-cuda12x
       - pyzmq
       - pycapnp
       - typer
