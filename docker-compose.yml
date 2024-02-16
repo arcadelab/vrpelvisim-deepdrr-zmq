@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  deepdrrzmq:
+  pelvisvr-deepdrr-zmq-service:
     image: ghcr.io/arcadelab/pelvisvr-deepdrr-zmq:main
     restart: unless-stopped
     ports:
@@ -43,7 +43,7 @@ services:
           memory: 8G
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu]
 volumes:
   deepdrrcache:

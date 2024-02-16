@@ -1,5 +1,6 @@
-git+https://github.com/arcadelab/deepdrr.git@dev
-cupy-cuda11x
+# git+https://github.com/arcadelab/deepdrr.git@dev
+# cupy-cuda11x
+git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
 pyzmq
 pycapnp
 typer
