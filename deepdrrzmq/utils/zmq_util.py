@@ -1,6 +1,6 @@
-from contextlib import contextmanager
-import zmq.asyncio
 import zmq
+import zmq.asyncio
+from contextlib import contextmanager
 
 
 @contextmanager

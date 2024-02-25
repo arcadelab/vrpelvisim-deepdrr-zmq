@@ -1,8 +1,9 @@
 
+import os
 import capnp
 import typer
 import zmq.asyncio
-import os
+import numpy as np
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 messages = capnp.load(os.path.join(file_path, "..", 'messages.capnp'))
