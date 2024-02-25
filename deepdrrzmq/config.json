@@ -1,0 +1,11 @@
+{
+    "network": {
+      "addr": "localhost",
+      "addr_localhost": "localhost",
+      "addr_ip": "10.162.34.73",
+      "rep_port": 40120,
+      "pub_port": 40121,
+      "sub_port": 40122
+    }
+}
+  
