@@ -1,53 +1,54 @@
 name: pelvisvr-deepdrr-zmq
 channels:
   - pytorch
-  - nvidia
+  - "nvidia/label/cuda-11.8.0"
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.10
   - pytorch
   - torchvision
-  - pytorch-cuda=11.7
-  - cudatoolkit-dev=11.7
-  - pycuda
-  - sphinx
+  - cuda-toolkit
+  - cuda-runtime
+  - cuda-nvprof
+  - cuda-gdb
+  - cuda-profiler-api
   - pip
   - pip:
-      - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
+      - git+https://github.com/arcadelab/deepdrr.git@dev
+      - cupy-cuda11x
       - pyzmq
       - pycapnp
       - typer
       - scipy
       - joblib
+      - more_itertools
       - pipenv
       - tqdm
       - ipywidgets
       - jupyter
-      - more_itertools
+
 # channels:
 #   - pytorch
-#   - "nvidia/label/cuda-11.8.0"
+#   - nvidia
 #   - conda-forge
 # dependencies:
-#   - python=3.10
+#   - python=3.8
 #   - pytorch
 #   - torchvision
-#   - cuda-toolkit
-#   - cuda-runtime
-#   - cuda-nvprof
-#   - cuda-gdb
-#   - cuda-profiler-api
+#   - pytorch-cuda=11.7
+#   - cudatoolkit-dev=11.7
+#   - pycuda
+#   - sphinx
 #   - pip
 #   - pip:
-#       - git+https://github.com/arcadelab/deepdrr.git@dev
-#       - cupy-cuda11x
+#       - git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
 #       - pyzmq
 #       - pycapnp
 #       - typer
 #       - scipy
 #       - joblib
-#       - more_itertools
 #       - pipenv
 #       - tqdm
 #       - ipywidgets
-#       - jupyter  
+#       - jupyter
+#       - more_itertools
