@@ -2,7 +2,8 @@
     "network": {
       "addr": "localhost",
       "addr_localhost": "localhost",
-      "addr_ip": "10.162.34.73",
+      "addr_ip_jhu": "10.162.34.73",
+      "addr_ip": "172.16.92.41",
       "rep_port": 40120,
       "pub_port": 40121,
       "sub_port": 40122
