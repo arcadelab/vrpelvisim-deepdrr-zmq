@@ -16,13 +16,13 @@ dependencies:
   - pip:
       - git+https://github.com/arcadelab/deepdrr.git@dev
       - cupy-cuda11x
-      - pyzmq
-      - pycapnp
-      - typer
-      - scipy
+      - ipywidgets
       - joblib
+      - jupyter
       - more_itertools
       - pipenv
+      - pyzmq
+      - pycapnp
+      - scipy
       - tqdm
-      - ipywidgets
-      - jupyter
+      - typer
