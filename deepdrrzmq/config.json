@@ -2,11 +2,13 @@
     "network": {
       "addr": "localhost",
       "addr_localhost": "localhost",
-      "addr_ip_jhu": "10.162.34.73",
-      "addr_ip": "172.16.92.41",
-      "rep_port": 40120,
-      "pub_port": 40121,
-      "sub_port": 40122
+      "addr_ip_eth": "10.162.34.73",
+      "addr_ip_lo": "127.0.0.1",
+      "addr_ip_danny": "172.16.92.40",
+      "rep_port": 40100,
+      "pub_port": 40101,
+      "sub_port": 40102,
+      "hwm": 10000
     }
 }
   
