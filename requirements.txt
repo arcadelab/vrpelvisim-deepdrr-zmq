@@ -1,4 +1,3 @@
-# git+https://github.com/PelvisVR/deepdrr.git@direct_voxelize
 git+https://github.com/arcadelab/deepdrr.git@dev
 cupy-cuda11x
 joblib

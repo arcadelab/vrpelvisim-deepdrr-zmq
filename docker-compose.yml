@@ -11,9 +11,6 @@ services:
       - PATIENT_DATA_DIR=/patientdata
       - LOG_DIR=/logdata
       - DEEPDRR_DATA_DIR=/deepdrrcache
-    # depends_on:
-    #   - pyradonc
-    #   - usdzconvert
     volumes:
       # Patient data
       - type: bind
@@ -43,7 +40,7 @@ services:
           memory: 8G
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu, utility, compute, graphics]
 volumes:
   deepdrrcache:
