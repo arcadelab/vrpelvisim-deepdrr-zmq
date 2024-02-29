@@ -40,7 +40,7 @@ services:
           memory: 8G
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu, utility, compute, graphics]
 volumes:
   deepdrrcache:
