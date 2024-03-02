@@ -1,11 +1,17 @@
-
 import capnp
-import typer
-import zmq.asyncio
-import os
+import numpy as np
+from pathlib import Path
+# import typer
+# import zmq.asyncio
 
-file_path = os.path.dirname(os.path.realpath(__file__))
-messages = capnp.load(os.path.join(file_path, "..", 'messages.capnp'))
+
+"""
+Load the capnp messages module (schema).
+"""
+deepdrrzmq_dir = Path(__file__).resolve().parents[1]
+messages_path = deepdrrzmq_dir / 'messages.capnp'
+messages = capnp.load(str(messages_path))
+
 
 def make_response(code, message):
     """
@@ -13,7 +19,9 @@ def make_response(code, message):
 
     :param code: The status code.
     :param message: The status message.
-    :return: The StatusResponse message.
+    
+    Returns:
+        : The StatusResponse message.
     """
     response = messages.StatusResponse.new_message()
     response.code = code
@@ -25,7 +33,9 @@ def capnp_optional(optional):
     Convert a capnp optional to a python value.
     
     :param optional: The capnp optional.
-    :return: The value of the optional, or None if the optional is not set.
+    
+    Returns:
+        : The value of the optional, or None if the optional is not set.
     """
     if optional.which() == "value":
         return optional.value
@@ -37,7 +47,9 @@ def capnp_square_matrix(optional):
     Convert a capnp optional to a square numpy array.
     
     :param optional: The capnp optional.
-    :return: The value of the optional, or None if the optional is not set.
+    
+    Returns:
+        : The value of the optional, or None if the optional is not set.
     """
     if len(optional.data) == 0:
         return None
@@ -49,10 +61,12 @@ def capnp_square_matrix(optional):
         arr = arr.reshape((side, side))
         return arr
 
+
 class DeepDRRServerException(Exception):
     """
     Exception class for server errors.
     """
+    
     def __init__(self, code, message, subexception=None):
         """
         :param code: The status code.

@@ -1,7 +1,7 @@
 # source:  https://gitlab.com/boratko/typer-utils
-from typing import Callable
-import functools
 import typer
+import functools
+from typing import Callable
 from typer.models import ParameterInfo
 
 __all__ = ["no_option_conversion", "unwrap_typer_param"]
