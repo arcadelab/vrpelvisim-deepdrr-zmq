@@ -19,7 +19,7 @@ deepdrr/model_segmentation.pth.tar
 logs
 *.log
 *.pvrlog
-logs.*
+log*.*
 logs*.*
 
 # Byte-compiled / optimized / DLL files

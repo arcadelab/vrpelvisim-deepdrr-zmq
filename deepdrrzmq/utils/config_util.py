@@ -2,11 +2,7 @@ import json
 from pathlib import Path
 
 
-deepdrrzmq_dir = Path(__file__).resolve().parents[1]
-config_path = deepdrrzmq_dir / 'config.json'
-
-
-def load_config(config_file=config_path):
+def load_config(config_file):
     """
     Loads configuration from a JSON file.
 
@@ -24,3 +20,11 @@ def load_config(config_file=config_path):
         raise Exception(f"Configuration file {config_file} not found.")
     except json.JSONDecodeError:
         raise Exception("Error decoding JSON from the configuration file.")
+
+
+"""
+Load the config.json file.
+"""
+deepdrrzmq_dir = Path(__file__).resolve().parents[1]
+config_path = deepdrrzmq_dir / 'config.json'
+config = load_config(config_path)

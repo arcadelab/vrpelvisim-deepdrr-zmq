@@ -6,22 +6,21 @@ import logging
 from pathlib import Path
 import numpy as np
 
-
-
 import capnp
 import deepdrr
 import numpy as np
 import typer
 import zmq.asyncio
 
-from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
-
-from .utils.typer_util import unwrap_typer_param
-
 import pyvista as pv
-from .utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
 
-# app = typer.Typer()
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
+from deepdrrzmq.utils.typer_util import unwrap_typer_param
+from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
+
+
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
