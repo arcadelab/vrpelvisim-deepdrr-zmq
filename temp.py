@@ -65,8 +65,9 @@ PatientCaseID = search_common_cases(paths, CONSTANTS['PatientCaseIDPrefix'])
 case_files = search_files_for_cases(PatientCaseID, paths)
 
 
-print(case_files)
-print(case_files[PatientCaseID[0]])
-print(f'mesh = {case_files[PatientCaseID[0]]["mesh_loader"]}')
-print(f'nifti = {case_files[PatientCaseID[0]]["nifti_volume"]}')
-print(f'anno = {case_files[PatientCaseID[0]]["anno_loader"]}')
+case_id = 3
+# print(case_files)
+# print(case_files[PatientCaseID[case_id]])
+print(f'mesh = {case_files[PatientCaseID[case_id]]["mesh_loader"]}')
+print(f'nifti = {case_files[PatientCaseID[case_id]]["nifti_volume"]}')
+# print(f'anno = {case_files[PatientCaseID[case_id]]["anno_loader"]}')

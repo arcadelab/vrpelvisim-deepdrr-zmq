@@ -83,6 +83,17 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
         niftiPath = str(patient_data_dir / niftiParams.path)
     else:
         niftiPath = niftiParams.path
+    
+    # niftiParamsPath = Path(niftiParams.path)
+    # if not niftiParamsPath.expanduser().is_absolute():
+    #     niftiWildcardsPath = patient_data_dir / niftiParamsPath
+    # else:
+    #     niftiWildcardsPath = niftiParamsPath
+        
+    # niftiCaseDir = niftiWildcardsPath.parent
+    # niftiVolumeName = niftiWildcardsPath.name
+    # niftiPaths = sorted(niftiCaseDir.glob(niftiVolumeName)) + [niftiWildcardsPath]
+    # niftiPath = str(niftiPaths[0])
 
     niftiVolume = from_nifti_cached(
         path=niftiPath,
