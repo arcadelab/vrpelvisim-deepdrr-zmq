@@ -80,11 +80,11 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
 
     # if niftiParams.path is a relative path, make it relative to the patient data directory
     if not Path(niftiParams.path).expanduser().is_absolute():
-        niftiPath = str(patient_data_dir / niftiParams.path)
+        niftiPath0 = str(patient_data_dir / niftiParams.path)
     else:
-        niftiPath = niftiParams.path
-    print(f"niftiPath: {niftiPath}")
-    logging.info(f"niftiPath: {niftiPath}")
+        niftiPath0 = niftiParams.path
+    print(f"niftiPath0 [{type(niftiPath0)}]: {niftiPath0}")
+    logging.info(f"niftiPath0 [{type(niftiPath0)}]: {niftiPath0}")
     
     niftiParamsPath = Path(niftiParams.path)
     if not niftiParamsPath.expanduser().is_absolute():
@@ -95,9 +95,9 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
     niftiCaseDir = niftiWildcardsPath.parent
     niftiVolumeName = niftiWildcardsPath.name
     niftiPaths = sorted(niftiCaseDir.glob(niftiVolumeName)) + [niftiWildcardsPath]
-    niftiPathTest = str(niftiPaths[0])
-    print(f"niftiPathTet: {niftiPathTest}")
-    logging.info(f"niftiPathTest: {niftiPathTest}")
+    niftiPath = str(niftiPaths[0])
+    print(f"niftiPath [{type(niftiPath)}]: {niftiPath}")
+    logging.info(f"niftiPath [{type(niftiPath)}]: {niftiPath}")
 
     niftiVolume = from_nifti_cached(
         path=niftiPath,
