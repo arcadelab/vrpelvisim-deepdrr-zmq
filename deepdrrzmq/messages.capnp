@@ -223,7 +223,7 @@ struct UIControlSettings  {
     webcorridorselection @5 :Int32 ; # The index of web selection
     flippatient @6 :Bool; # Flip patient bool
     viewIndicatorselfselect @7 :Bool; # View indicator self select bool
-    patientCaseID @8 :Text; # Patient case ID
+    patientCaseId @8 :Text; # Patient case ID
 }
 
 struct LogFile {
