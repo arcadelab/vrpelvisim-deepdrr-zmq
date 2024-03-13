@@ -213,16 +213,17 @@ struct LoggerStatus {
     sessionId @1 :Text; # Session id of the logger
 }
 
-#06/12 -webIU
+# WebUI
 struct UIControlSettings  {
     patientMaterial @0 :Int32; # Skin opaque/transparent  
     annotationError @1 :List(Text); # Session id of the logger
     corridorIndicator @2 :Bool; # All corridor indicator bool
     carmIndicator @3 :Bool; # C-arm indicator bool
-    webcorridorerrorselect @4 :Bool;#corridorErrorWebControl
-    webcorridorselection @5 :Int32 ;#the index of web selection
+    webcorridorerrorselect @4 :Bool; # Corridor error web control
+    webcorridorselection @5 :Int32 ; # The index of web selection
     flippatient @6 :Bool; # Flip patient bool
     viewIndicatorselfselect @7 :Bool; # View indicator self select bool
+    patientCaseID @8 :Text; # Patient case ID
 }
 
 struct LogFile {
