@@ -79,10 +79,22 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
     """
 
     # if niftiParams.path is a relative path, make it relative to the patient data directory
-    if not Path(niftiParams.path).expanduser().is_absolute():
-        niftiPath = str(patient_data_dir / niftiParams.path)
+    # if not Path(niftiParams.path).expanduser().is_absolute():
+    #     niftiPath = str(patient_data_dir / niftiParams.path)
+    # else:
+    #     niftiPath = niftiParams.path
+    
+    niftiParamsPath = Path(niftiParams.path)
+    if not niftiParamsPath.expanduser().is_absolute():
+        niftiWildcardsPath = patient_data_dir / niftiParamsPath
     else:
-        niftiPath = niftiParams.path
+        niftiWildcardsPath = niftiParamsPath
+        
+    niftiCaseDir = niftiWildcardsPath.parent
+    niftiVolumeName = niftiWildcardsPath.name
+    niftiPaths = sorted(niftiCaseDir.glob(niftiVolumeName)) + [niftiWildcardsPath]
+    niftiPath = str(niftiPaths[0])
+    print(f"niftiPath [{type(niftiPath)}]: {niftiPath}")
 
     niftiVolume = from_nifti_cached(
         path=niftiPath,
@@ -165,7 +177,7 @@ class DeepDRRServer:
         # PATIENT_DATA_DIR environment variable is set by the docker container
         default_data_dir = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
         self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_data_dir))
-
+        print(f"patient data dir: {self.patient_data_dir}")
         logging.info(f"patient data dir: {self.patient_data_dir}")
 
     async def start(self):

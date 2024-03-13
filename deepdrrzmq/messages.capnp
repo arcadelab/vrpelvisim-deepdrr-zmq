@@ -183,7 +183,7 @@ struct ClientHeartbeat {
     clientId @0 :Text;
 }
 
-struct SycnedSetting {
+struct SyncedSetting {
     timestamp @0 :Float64; # Timestamp of the setting
     clientId @1 :Text; # Client id
     setting :union {
@@ -194,7 +194,7 @@ struct SycnedSetting {
         long @6 :Int64;
         string @7 :Text;
         arm @8 :CArmSettings;
-        uiControl @9 :UIControlSetting;#Need add
+        uiControl @9 :UIControlSettings; #Need add
     }
 }
 
@@ -214,7 +214,7 @@ struct LoggerStatus {
 }
 
 #06/12 -webIU
-struct UIControlSetting  {
+struct UIControlSettings  {
     patientMaterial @0 :Int32; # Skin opaque/transparent  
     annotationError @1 :List(Text); # Session id of the logger
     corridorIndicator @2 :Bool; # All corridor indicator bool
