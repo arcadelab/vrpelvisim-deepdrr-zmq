@@ -177,6 +177,7 @@ struct SyncedTransformUpdate {
     timestamp @0 :Float64; # Timestamp of the transformation matrix
     clientId @1 :Text; # Client id
     transforms @2 :List(Matrix4x4); # Transformation matrices
+    triggerButtonPressed @3 :Bool; # Indicator for the trigger button state
 }
 
 struct ClientHeartbeat {
