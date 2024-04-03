@@ -6,9 +6,14 @@ from PIL import Image
 from io import BytesIO
 
 messages = capnp.load("deepdrr_zmq/deepdrrzmq/messages.capnp")
+
+
 def extract_topic_data_from_log(log_file,log_folder_path):
     entries = messages.LogEntry.read_multiple_bytes(log_file.read_bytes())
     topic_data = []
+    # Start of snapshot commit
+    triggered_transform_data = []
+    # End of snapshot commit
     unique_topics = []
     i = 0
     image_idx = 0
@@ -30,6 +35,9 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                 for i in range(len(transform.transforms)):
                     transforms.append([x for x in transform.transforms[i].data])
                 msgdict['transforms'] = transforms
+                # Start of snapshot commit
+                msgdict['triggerButtonPressed'] = transform.triggerButtonPressed
+                # End of snapshot commit
                 # msgdict['transforms'] = transform_dict 
         if topic.startswith("/mp/time/"):
             with messages.Time.from_bytes(entry.data) as time:
@@ -85,22 +93,41 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                     setting = setting_data.setting.arm.liveCapture  
                     msgdict['liveCapture'] = setting          
         topic_data.append(msgdict)
-    return topic_data, unique_topics
+        # Start of snapshot commit
+        if msgdict.get('triggerButtonPressed'):
+            triggered_transform_data.append(msgdict)
+
+    return topic_data, triggered_transform_data, unique_topics # return topic_data, unique_topics
+    # End of snapshot commit
+
+
 def convert_pvrlog_to_json(log_folder):
     log_folder_path = Path(log_folder)
     pvrlog_files = log_folder_path.glob("*.pvrlog")
     for log_file in pvrlog_files:
-        json_file_path = log_folder_path /f"{log_file.stem}.json"
         img_folder_path = log_folder_path / f"image"
+        json_file_path = log_folder_path / f"{log_file.stem}.json"
+        triggered_json_file_path = log_folder_path / f"{log_file.stem}_triggered_transform_data.json"
         os.makedirs(img_folder_path, exist_ok=True)
-        topic_data ,unique_topics= extract_topic_data_from_log(log_file,img_folder_path)
+
+        # Start of snapshot commit
+        topic_data, triggered_transform_data, unique_topics = extract_topic_data_from_log(log_file, img_folder_path)
+        
         with open(json_file_path, 'w') as json_file:
             json.dump(topic_data, json_file, indent=4)
-        # print(f"Converted {log_file.name} to JSON.")#for debug
+        print(f"Outputted transform data to {json_file_path}")
+        
+        with open(triggered_json_file_path, 'w') as json_file:
+            json.dump(triggered_transform_data, json_file, indent=4)
+        print(f"Outputted triggered transform data to {triggered_json_file_path}")
+        # End of snapshot commit
+            
+        # print(f"Converted {log_file.name} to JSON.") # for debug
     # print('--------------Unique Topics--------------')
     # for topic in unique_topics:
     #     print(topic)
     print('---------------Convert Complete--------------')
+
 
 if __name__ == '__main__':
     # log_folder = input("Enter the folder path containing .pvrlog files: ")
