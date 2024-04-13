@@ -106,7 +106,8 @@ class PatientLoaderServer:
 
             # open the mesh file
             mesh_file = self.patient_data_dir / meshId
-            # mesh = pv.read(mesh_file)
+            
+            # parse mesh
             try:
                 mesh = pv.read(mesh_file)
             except Exception as e:
@@ -140,15 +141,26 @@ class PatientLoaderServer:
         with messages.AnnoRequest.from_bytes(data) as request:
             print(f"patient_anno_request: {request.annoId}")
 
-            annoId = request.annoId
+            # annoId = request.annoId
 
             # open the annotation file
-            annotation_file = self.patient_data_dir / annoId
-            # parse json
-            # with open(annotation_file, "r") as f:
-            #     annotation = json.load(f)
+            # annoPath = self.patient_data_dir / annoId
+            annoParamsPath = Path(request.annoId)
+            if not annoParamsPath.expanduser().is_absolute():
+                annoWildcardsPath = self.patient_data_dir / annoParamsPath
+            else:
+                annoWildcardsPath = annoParamsPath
+
+            annoCaseDir = annoWildcardsPath.parent
+            annoName = annoWildcardsPath.name
+            annoPaths = sorted(annoCaseDir.glob(annoName)) + [annoWildcardsPath]
+            annoPath = annoPaths[0]
+            annoId = annoPath.relative_to(self.patient_data_dir)
+            print(f"annoPath [{type(annoPath)}]: {annoPath}")
+            
+            # parse anno
             try:
-                with open(annotation_file, "r") as f:
+                with open(annoPath, "r") as f:
                     annotation = json.load(f)
             except Exception as e:
                 print(f"patient_anno_request error: {e}: {request.annoId}")
