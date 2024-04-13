@@ -106,7 +106,7 @@ class PatientLoaderServer:
 
             # open the mesh file
             mesh_file = self.patient_data_dir / meshId
-            # mesh = pv.read(mesh_file)
+            # parse mesh
             try:
                 mesh = pv.read(mesh_file)
             except Exception as e:
@@ -144,9 +144,7 @@ class PatientLoaderServer:
 
             # open the annotation file
             annotation_file = self.patient_data_dir / annoId
-            # parse json
-            # with open(annotation_file, "r") as f:
-            #     annotation = json.load(f)
+            # parse anno
             try:
                 with open(annotation_file, "r") as f:
                     annotation = json.load(f)

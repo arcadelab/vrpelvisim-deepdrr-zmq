@@ -79,11 +79,6 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
     """
 
     # if niftiParams.path is a relative path, make it relative to the patient data directory
-    # if not Path(niftiParams.path).expanduser().is_absolute():
-    #     niftiPath = str(patient_data_dir / niftiParams.path)
-    # else:
-    #     niftiPath = niftiParams.path
-    
     niftiParamsPath = Path(niftiParams.path)
     if not niftiParamsPath.expanduser().is_absolute():
         niftiWildcardsPath = patient_data_dir / niftiParamsPath
