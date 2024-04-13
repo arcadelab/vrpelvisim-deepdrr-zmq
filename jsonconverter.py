@@ -65,6 +65,7 @@ def extract_topic_data_from_log(log_file,log_folder_path):
         
         if topic.startswith("/project_response/"):
         #     decode  the jpeg image from the bytes
+            print(f"enter project response")
             image = Image.open(BytesIO(entry.data))
             image_filename = str(image_idx) + ".jpg"
             image_path = os.path.join(log_folder_path, image_filename)
@@ -137,8 +138,6 @@ def convert_pvrlog_to_json(log_folder):
 
 
 if __name__ == '__main__':
-    # log_folder = input("Enter the folder path containing .pvrlog files: ")
-    # log_folder = "C:/vrplog/zggdi8m5m8aql2bn--2023-06-24-23-39-57"
     log_dir = Path('/home/virtualpelvislab/logdata')
-    log_data = Path(log_dir) / "yn4zb58muykuj88j--2024-04-06-19-43-03"
+    log_data = Path(log_dir) / "3vxmqjw2jmicqrg6--2024-04-07-01-15-19"
     convert_pvrlog_to_json(log_data)
