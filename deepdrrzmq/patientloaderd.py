@@ -106,7 +106,12 @@ class PatientLoaderServer:
 
             # open the mesh file
             mesh_file = self.patient_data_dir / meshId
-            mesh = pv.read(mesh_file)
+            # mesh = pv.read(mesh_file)
+            try:
+                mesh = pv.read(mesh_file)
+            except Exception as e:
+                print(f"patient_mesh_request error: {e}: {request.meshId}")
+                return
 
             # create the response message
             msg = messages.MeshResponse.new_message()
@@ -140,8 +145,14 @@ class PatientLoaderServer:
             # open the annotation file
             annotation_file = self.patient_data_dir / annoId
             # parse json
-            with open(annotation_file, "r") as f:
-                annotation = json.load(f)
+            # with open(annotation_file, "r") as f:
+            #     annotation = json.load(f)
+            try:
+                with open(annotation_file, "r") as f:
+                    annotation = json.load(f)
+            except Exception as e:
+                print(f"patient_anno_request error: {e}: {request.annoId}")
+                return
 
             # get the control points
             controlPoints = annotation["markups"][0]["controlPoints"]
