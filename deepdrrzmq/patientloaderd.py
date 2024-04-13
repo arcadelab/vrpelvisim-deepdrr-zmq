@@ -155,7 +155,7 @@ class PatientLoaderServer:
             annoName = annoWildcardsPath.name
             annoPaths = sorted(annoCaseDir.glob(annoName)) + [annoWildcardsPath]
             annoPath = annoPaths[0]
-            annoId = str(annoPath.relative_to(self.patient_data_dir))
+            annoId = annoPath.relative_to(self.patient_data_dir)
             print(f"annoPath [{type(annoPath)}]: {annoPath}")
             
             # parse anno
