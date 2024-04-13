@@ -1,4 +1,5 @@
-git+https://github.com/arcadelab/deepdrr.git@dev
+# git+https://github.com/arcadelab/deepdrr.git@dev
+git+https://github.com/arcadelab/deepdrr.git@43b45a8674541f746aa8d92e84acfd983989e194
 cupy-cuda11x
 joblib
 more_itertools
