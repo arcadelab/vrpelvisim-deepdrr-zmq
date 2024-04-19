@@ -173,11 +173,21 @@ struct Vector3 {
     data @0 :List(Float32);
 }
 
+# Used for sending unity transforms between the clients
+# Used for the CArms and multiplayer tools
 struct SyncedTransformUpdate {
     timestamp @0 :Float64; # Timestamp of the transformation matrix
     clientId @1 :Text; # Client id
     transforms @2 :List(Matrix4x4); # Transformation matrices
-    triggerButtonPressed @3 :Bool; # Indicator for the trigger button state
+    # triggerButtonPressed @3 :Bool; # Indicator for the trigger button state
+}
+
+# Sent from the Unity Client to the server (singleshotd.py) for snapshot capture
+struct SingleShotData {
+    userId @0 :Text; # User ID
+    patientCaseId @1 :Text; # Patient case ID
+    standardViewName @2 :Text; # Standard view name
+    requestId @3 :Text; # Unique project request id
 }
 
 struct ClientHeartbeat {
