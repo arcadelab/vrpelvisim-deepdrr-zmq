@@ -26,9 +26,9 @@ import json
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-class SingleShotServer:
+class SnapshotServer:
     """
-    Server for logging data from the surgical simulation.
+    Server for logging snapshot data from the surgical simulation.
     """
     def __init__(self, context, rep_port, pub_port, sub_port, log_root_path):
         """
@@ -62,12 +62,12 @@ class SingleShotServer:
         pub_socket.connect(f"tcp://localhost:{self.pub_port}")
         sub_socket.connect(f"tcp://localhost:{self.sub_port}")
 
-        sub_socket.subscribe(b"/single_shot_request/")
+        sub_socket.subscribe(b"/snapshot_request/")
         sub_socket.subscribe(b"project_request/")
         sub_socket.subscribe(b"/project_response/")
         
         requestId = None
-        single_shot_request = None
+        snapshot_request = None
         project_request = None
         project_response = None
         while True:
@@ -77,13 +77,13 @@ class SingleShotServer:
                 for topic, data in latest_msgs.items():
                     
                     # this might not come first
-                    if topic.startswith(b"/single_shot_request/"):
-                        with messages.SingleShotRequest.from_bytes(data) as request:
+                    if topic.startswith(b"/snapshot_request/"):
+                        with messages.SnapshotRequest.from_bytes(data) as request:
                             requestId = request.requestId
-                            single_shot_request = data
+                            snapshot_request = data
                             project_request = None
                             project_response = None
-                        print(f"single shot request: {topic}")
+                        print(f"snapshot request: {topic}")
 
                     if topic.startswith(b"project_request/"):
                         with messages.ProjectRequest.from_bytes(data) as request:
@@ -95,9 +95,9 @@ class SingleShotServer:
                             if response.requestId == requestId:
                                 project_response = data
 
-                    if single_shot_request and project_request and project_response:
+                    if snapshot_request and project_request and project_response:
                         msgdict = {}
-                        with messages.SingleShotRequest.from_bytes(single_shot_request) as request:
+                        with messages.SnapshotRequest.from_bytes(snapshot_request) as request:
                             msgdict['requestId'] = request.requestId
                             msgdict['userId'] = request.userId
                             msgdict['patientCaseId'] = request.patientCaseId
@@ -146,7 +146,7 @@ class SingleShotServer:
                             print(f"json file saved to {json_path}")
                             
                         requestId = None
-                        single_shot_request = None
+                        snapshot_request = None
                         project_request = None
                         project_response = None
                         
@@ -175,15 +175,14 @@ def main(
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")
 
-    single_shot_logs_dir_default = Path(r"logs/sslogs") 
-    single_shot_logs_dir = Path(os.environ.get("SINGLE_SHOT_LOG_DIR", single_shot_logs_dir_default)).resolve()
-    print(f"single_shot_logs_dir: {single_shot_logs_dir}")
+    snapshot_logs_dir_default = Path(r"logs/sslogs") 
+    snapshot_logs_dir = Path(os.environ.get("SNAPSHOT_LOG_DIR", snapshot_logs_dir_default)).resolve()
+    print(f"snapshot_logs_dir: {snapshot_logs_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with SingleShotServer(context, rep_port, pub_port, sub_port, single_shot_logs_dir) as time_server:
+        with SnapshotServer(context, rep_port, pub_port, sub_port, snapshot_logs_dir) as time_server:
             asyncio.run(time_server.start())
 
 
 if __name__ == '__main__':
     app()
-

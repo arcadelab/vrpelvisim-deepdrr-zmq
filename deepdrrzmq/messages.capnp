@@ -182,8 +182,8 @@ struct SyncedTransformUpdate {
     # triggerButtonPressed @3 :Bool; # Indicator for the trigger button state
 }
 
-# Sent from the Unity Client to the server (singleshotd.py) for snapshot capture
-struct SingleShotRequest {
+# Sent from the Unity Client to the server (snapshotd.py) for snapshot capture
+struct SnapshotRequest {
     userId @0 :Text; # User ID
     patientCaseId @1 :Text; # Patient case ID
     standardViewName @2 :Text; # Standard view name
