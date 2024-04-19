@@ -102,6 +102,7 @@ class SnapshotServer:
                             msgdict['userId'] = request.userId
                             msgdict['patientCaseId'] = request.patientCaseId
                             msgdict['standardViewName'] = request.standardViewName
+                            msgdict['standardViewCount'] = request.standardViewCount
                         with messages.ProjectRequest.from_bytes(project_request) as request:
                             msgdict['projectorId'] = request.projectorId
                             cameraProjections_dict_ = []

@@ -187,6 +187,7 @@ struct SnapshotRequest {
     userId @0 :Text; # User ID
     patientCaseId @1 :Text; # Patient case ID
     standardViewName @2 :Text; # Standard view name
+    standardViewCount @3 :Int32; # Standard view count
     requestId @3 :Text; # Unique project request id
 }
 
