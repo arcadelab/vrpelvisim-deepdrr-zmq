@@ -78,7 +78,7 @@ class SingleShotServer:
                     
                     # this might not come first
                     if topic.startswith(b"/single_shot_request/"):
-                        with messages.SingleShotData.from_bytes(data) as request:
+                        with messages.SingleShotRequest.from_bytes(data) as request:
                             requestId = request.requestId
                             single_shot_request = data
                             project_request = None
@@ -97,7 +97,7 @@ class SingleShotServer:
 
                     if single_shot_request and project_request and project_response:
                         msgdict = {}
-                        with messages.SingleShotData.from_bytes(single_shot_request) as request:
+                        with messages.SingleShotRequest.from_bytes(single_shot_request) as request:
                             msgdict['requestId'] = request.requestId
                             msgdict['userId'] = request.userId
                             msgdict['patientCaseId'] = request.patientCaseId
@@ -177,13 +177,12 @@ def main(
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")
 
-    log_root_path = Path("sslogs") 
-    # log_root_path = Path(os.environ.get("LOG_DIR", log_root_path))
-    log_root_path = log_root_path.resolve()
-    print(f"log_root_path: {log_root_path}")
+    single_shot_log_dir_default = Path(r"logs/sslogs") 
+    single_shot_log_dir = Path(os.environ.get("SINGLE_SHOT_LOG_DIR", single_shot_log_dir_default)).resolve()
+    print(f"single_shot_log_dir: {single_shot_log_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with SingleShotServer(context, rep_port, pub_port, sub_port, log_root_path) as time_server:
+        with SingleShotServer(context, rep_port, pub_port, sub_port, single_shot_log_dir) as time_server:
             asyncio.run(time_server.start())
 
 
