@@ -183,7 +183,7 @@ struct SyncedTransformUpdate {
 }
 
 # Sent from the Unity Client to the server (singleshotd.py) for snapshot capture
-struct SingleShotData {
+struct SingleShotRequest {
     userId @0 :Text; # User ID
     patientCaseId @1 :Text; # Patient case ID
     standardViewName @2 :Text; # Standard view name

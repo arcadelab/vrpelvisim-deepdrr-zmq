@@ -337,6 +337,7 @@ class DeepDRRServer:
 
                 msg.init("images", 1)
 
+                # send loading image
                 green_loading_img = np.zeros((512, 512, 3), dtype=np.uint8)
                 green_loading_img[:, :, 1] = 255
                 pil_img = Image.fromarray(green_loading_img)
@@ -407,8 +408,8 @@ class DeepDRRServer:
 
                 msg.images[i].data = buffer.getvalue()
 
-            await pub_socket.send_multipart([b"/project_response/", msg.images[0].data])
-            # await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
+            # await pub_socket.send_multipart([b"/project_response/", msg.images[0].data])
+            await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
 
             return True
     

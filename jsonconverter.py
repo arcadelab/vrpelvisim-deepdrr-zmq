@@ -63,8 +63,9 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                     transforms.append([x for x in request.volumesWorldFromAnatomical[i].data])
                 msgdict['volumesWorldFromAnatomical'] = transforms 
         
+        # TODO: fix for using CapnpGen.ProjectResponse instead of byte[]
         if topic.startswith("/project_response/"):
-        #     decode  the jpeg image from the bytes
+            # decode the jpeg image from byte[]
             print(f"enter project response")
             image = Image.open(BytesIO(entry.data))
             image_filename = str(image_idx) + ".jpg"

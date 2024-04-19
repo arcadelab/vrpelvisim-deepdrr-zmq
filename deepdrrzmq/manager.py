@@ -79,9 +79,10 @@ procs = [
     PythonProcess("deepdrrd", "deepdrrzmq.deepdrrd", watchdog_max_dt=-1),
     PythonProcess("patientloaderd", "deepdrrzmq.patientloaderd", watchdog_max_dt=-1),
     PythonProcess("timed", "deepdrrzmq.timed", watchdog_max_dt=-1),
-    # PythonProcess("printd", "deepdrrzmq.printd", watchdog_max_dt=-1),
     PythonProcess("loggerd", "deepdrrzmq.loggerd", watchdog_max_dt=-1),
     PythonProcess("replayd", "deepdrrzmq.replayd", watchdog_max_dt=-1),
+    PythonProcess("singleshotd", "deepdrrzmq.singleshotd", watchdog_max_dt=-1),
+    # PythonProcess("printd", "deepdrrzmq.printd", watchdog_max_dt=-1),
 ]
 
 main_procs = {p.name: p for p in procs}
