@@ -422,8 +422,6 @@ def main(
         pub_port=typer.Argument(40121),
         sub_port=typer.Argument(40122),
 ):
-
-    # print arguments
     print(f"rep_port: {rep_port}")
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")

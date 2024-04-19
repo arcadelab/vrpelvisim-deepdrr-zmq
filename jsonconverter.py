@@ -112,10 +112,10 @@ def extract_topic_data_from_log(log_file,log_folder_path):
     return topic_data, triggered_transform_data, unique_topics # return topic_data, unique_topics
 
 
-def convert_pvrlog_to_json(log_folder):
+def convert_vrpslog_to_json(log_folder):
     log_folder_path = Path(log_folder)
-    pvrlog_files = log_folder_path.glob("*.pvrlog")
-    for log_file in pvrlog_files:
+    vrpslog_files = log_folder_path.glob("*.vrpslog")
+    for log_file in vrpslog_files:
         img_folder_path = log_folder_path / f"image"
         json_file_path = log_folder_path / f"{log_file.stem}.json"
         triggered_json_file_path = log_folder_path / f"{log_file.stem}_triggered_transform_data.json"
@@ -141,4 +141,4 @@ def convert_pvrlog_to_json(log_folder):
 if __name__ == '__main__':
     log_dir = Path('/home/virtualpelvislab/logdata')
     log_data = Path(log_dir) / "3vxmqjw2jmicqrg6--2024-04-07-01-15-19"
-    convert_pvrlog_to_json(log_data)
+    convert_vrpslog_to_json(log_data)

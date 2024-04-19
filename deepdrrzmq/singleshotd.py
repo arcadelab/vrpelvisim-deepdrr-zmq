@@ -167,22 +167,20 @@ class SingleShotServer:
 @app.command()
 @unwrap_typer_param
 def main(
-        rep_port=typer.Argument(40120),
-        pub_port=typer.Argument(40121),
-        sub_port=typer.Argument(40122),
-        # log_root_path=typer.Argument("pvrlogs")
+    rep_port=typer.Argument(40120),
+    pub_port=typer.Argument(40121),
+    sub_port=typer.Argument(40122),
 ):
-
     print(f"rep_port: {rep_port}")
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")
 
-    single_shot_log_dir_default = Path(r"logs/sslogs") 
-    single_shot_log_dir = Path(os.environ.get("SINGLE_SHOT_LOG_DIR", single_shot_log_dir_default)).resolve()
-    print(f"single_shot_log_dir: {single_shot_log_dir}")
+    single_shot_logs_dir_default = Path(r"logs/sslogs") 
+    single_shot_logs_dir = Path(os.environ.get("SINGLE_SHOT_LOG_DIR", single_shot_logs_dir_default)).resolve()
+    print(f"single_shot_logs_dir: {single_shot_logs_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with SingleShotServer(context, rep_port, pub_port, sub_port, single_shot_log_dir) as time_server:
+        with SingleShotServer(context, rep_port, pub_port, sub_port, single_shot_logs_dir) as time_server:
             asyncio.run(time_server.start())
 
 

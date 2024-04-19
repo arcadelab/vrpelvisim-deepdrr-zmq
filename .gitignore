@@ -19,7 +19,7 @@ deepdrrcache
 # Logs
 logs
 *.log
-*.pvrlog
+*.vrpslog
 log*.*
 logs*.*
 
