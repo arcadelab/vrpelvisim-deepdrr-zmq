@@ -184,11 +184,11 @@ struct SyncedTransformUpdate {
 
 # Sent from the Unity Client to the server (snapshotd.py) for snapshot capture
 struct SnapshotRequest {
-    userId @0 :Text; # User ID
-    patientCaseId @1 :Text; # Patient case ID
-    standardViewName @2 :Text; # Standard view name
-    standardViewCount @3 :Int32; # Standard view count
-    requestId @3 :Text; # Unique project request id
+    requestId @0 :Text; # Unique project request id
+    userId @1 :Text; # User ID
+    patientCaseId @2 :Text; # Patient case ID
+    standardViewName @3 :Text; # Standard view name
+    standardViewCount @4 :Int32; # Standard view count
 }
 
 struct ClientHeartbeat {
