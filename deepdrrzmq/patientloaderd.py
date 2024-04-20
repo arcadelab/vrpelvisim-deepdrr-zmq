@@ -22,7 +22,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
 from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
-
+import time
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
@@ -113,25 +113,25 @@ class PatientLoaderServer:
             except Exception as e:
                 print(f"patient_mesh_request error: {e}: {request.meshId}")
                 return
-            
+                     
             # smooth mesh using pyvista
             taubin_smooth_iter = 50
             taubin_smooth_pass_band = 0.05
             mesh = mesh.smooth_taubin(n_iter=taubin_smooth_iter, pass_band=taubin_smooth_pass_band)
+
+            # fill holes using pymeshfix
+            pymeshfix_ = mf.MeshFix(mesh)
+            pymeshfix_.repair(verbose=True)
+            mesh = pymeshfix_.mesh
+
+            # apply a triangle filter using pyvista to ensure the mesh is simply polyhedral
+            mesh = mesh.triangulate()
 
             # decimate mesh using pyvista
             decimation_points = 10000
             if mesh.n_points > decimation_points:
                 # Decimate the surface to the desired number of points
                 mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
-            
-            # apply a triangle filter using pyvista to ensure the mesh is simply polyhedral
-            mesh = mesh.triangulate()
-            
-            # fill holes using pymeshfix
-            pymeshfix_ = mf.MeshFix(mesh)
-            pymeshfix_.repair(verbose=True)
-            mesh = pymeshfix_.mesh
             
             # fix winding order using trimesh
             trimesh_ = polydata_to_trimesh(mesh)
