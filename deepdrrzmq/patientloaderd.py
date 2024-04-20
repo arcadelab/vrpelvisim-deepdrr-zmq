@@ -12,6 +12,9 @@ import numpy as np
 import typer
 import zmq.asyncio
 
+from deepdrr.utils.mesh_utils import polydata_to_trimesh
+from trimesh.repair import fill_holes, fix_normals
+import pymeshfix as mf
 import pyvista as pv
 
 import sys
@@ -19,10 +22,6 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
 from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
-
-from deepdrr.utils.mesh_utils import polydata_to_trimesh
-from trimesh.repair import fill_holes, fix_normals
-import pymeshfix
 
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -47,10 +46,9 @@ class PatientLoaderServer:
         self.sub_port = sub_port
 
         # PATIENT_DATA_DIR environment variable is set by the docker container
-        default_data_dir = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
-        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_data_dir))
-
-        logging.info(f"patient data dir: {self.patient_data_dir}")
+        patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
+        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", patient_data_dir_default))
+        logging.info(f"patient_data_dir: {self.patient_data_dir}")
 
     async def start(self):
         project = self.project_server()
@@ -107,32 +105,35 @@ class PatientLoaderServer:
             print(f"patient_mesh_request: {request.meshId}")
 
             meshId = request.meshId
-
-            # open the mesh file
             mesh_file = self.patient_data_dir / meshId
-            # parse mesh
+            
+            # parse mesh using pyvista
             try:
                 mesh = pv.read(mesh_file)
             except Exception as e:
                 print(f"patient_mesh_request error: {e}: {request.meshId}")
                 return
             
-            # if taubin_smooth:
+            # smooth mesh using pyvista
             taubin_smooth_iter = 50
             taubin_smooth_pass_band = 0.05
             mesh = mesh.smooth_taubin(n_iter=taubin_smooth_iter, pass_band=taubin_smooth_pass_band)
 
-            # if decimation_points is not None and mesh.n_points > decimation_points:
-            # Decimate the surface to the desired number of points
-            # mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
-            mesh = mesh.decimate(0.5)
+            # decimate mesh using pyvista
+            decimation_points = 10000
+            if mesh.n_points > decimation_points:
+                # Decimate the surface to the desired number of points
+                mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
             
-            # fill holes
-            mesh = pymeshfix.MeshFix(mesh)
-            mesh.repair(verbose=True)
-            mesh = mesh.mesh
+            # apply a triangle filter using pyvista to ensure the mesh is simply polyhedral
+            mesh = mesh.triangulate()
             
-            # fix winding order
+            # fill holes using pymeshfix
+            pymeshfix_ = mf.MeshFix(mesh)
+            pymeshfix_.repair(verbose=True)
+            mesh = pymeshfix_.mesh
+            
+            # fix winding order using trimesh
             trimesh_ = polydata_to_trimesh(mesh)
             fix_normals(trimesh_)
             mesh = pv.wrap(trimesh_)
@@ -142,11 +143,11 @@ class PatientLoaderServer:
             msg.meshId = meshId
             msg.status = make_response(0, "ok")
             msg.mesh.vertices = mesh.points.flatten().tolist()
-            # todo: flip winding order on client side, not server
-            # flip winding order to match Unity's convension
+            
+            # flip winding order to match clinet's (Unity) convension
             msg.mesh.faces = mesh.faces.reshape((-1, 4))[..., 1:][..., [0, 2, 1]].flatten().tolist()
 
-            response_topic = "patient_mesh_response/"+meshId
+            response_topic = f"patient_mesh_response/{meshId}"
 
             await pub_socket.send_multipart([response_topic.encode(), msg.to_bytes()])
             print(f"sent mesh response {response_topic}")
