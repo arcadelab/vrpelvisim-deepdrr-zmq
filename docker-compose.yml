@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   vrpelvisim-deepdrr-zmq:
     image: ghcr.io/arcadelab/vrpelvisim-deepdrr-zmq:main

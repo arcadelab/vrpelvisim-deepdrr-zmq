@@ -224,6 +224,9 @@ class DeepDRRServer:
                         await self.handle_projector_params_response(pub_socket, latest_msgs[b"projector_params_response/"])
                     except Exception as e:
                         raise DeepDRRServerException(1, f"error creating projector", e)
+                
+                # allow send_status heartbeat to run
+                await asyncio.sleep(0)
 
             except DeepDRRServerException as e:
                 print(f"server exception: {e}")
