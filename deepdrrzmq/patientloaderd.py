@@ -167,9 +167,8 @@ class PatientLoaderServer:
             print(f"patient_anno_request: {request.annoId}")
 
             annoId = request.annoId
-
-            # open the annotation file
             annotation_file = self.patient_data_dir / annoId
+
             # parse anno
             try:
                 with open(annotation_file, "r") as f:
