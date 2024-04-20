@@ -19,6 +19,7 @@ import string
 import base64 
 from PIL import Image
 from io import BytesIO
+import aiofiles
 import json
 
 
@@ -45,13 +46,19 @@ class SnapshotServer:
         self.log_root_path = log_root_path
         self.log_root_path.mkdir(parents=True, exist_ok=True)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
     async def start(self):
         recorder_loop = self.logger_server()
         await asyncio.gather(recorder_loop)
 
     async def logger_server(self):
         """
-        Server for logging data from the surgical simulation.
+        Server for logging snapshot data from the surgical simulation.
         """
         sub_socket = self.context.socket(zmq.SUB)
         sub_socket.hwm = 10000
@@ -98,50 +105,30 @@ class SnapshotServer:
                     if snapshot_request and project_request and project_response:
                         msgdict = {}
                         with messages.SnapshotRequest.from_bytes(snapshot_request) as request:
-                            msgdict['requestId'] = request.requestId
-                            msgdict['userId'] = request.userId
-                            msgdict['patientCaseId'] = request.patientCaseId
-                            msgdict['standardViewName'] = request.standardViewName
-                            msgdict['standardViewCount'] = request.standardViewCount
+                            msgdict.update(self.capnp_message_to_dict(request))
                         with messages.ProjectRequest.from_bytes(project_request) as request:
-                            msgdict['projectorId'] = request.projectorId
-                            cameraProjections_dict_ = []
-                            for i in range(len(request.cameraProjections)):
-                                current_cameraProjections = request.cameraProjections[i]
-                                cameraProjections_dict = {}
-                                camerainstrinsic_dict = {}
-                                camerainstrinsic_dict['sensorHeight'] = current_cameraProjections.intrinsic.sensorHeight
-                                camerainstrinsic_dict['sensorWidth'] = current_cameraProjections.intrinsic.sensorWidth
-                                camerainstrinsic_dict['pixelSize'] = current_cameraProjections.intrinsic.pixelSize
-                                camerainstrinsic_dict['sourceToDetectorDistance'] = current_cameraProjections.intrinsic.sourceToDetectorDistance
-                                cameraProjections_dict['intrinsic'] = camerainstrinsic_dict
-                                cameraProjections_dict['extrinsic'] = list(request.cameraProjections[i].extrinsic.data)   
-                                cameraProjections_dict_.append(cameraProjections_dict)
-                            msgdict['cameraProjections'] = cameraProjections_dict_ 
-                            transforms = []
-                            for i in range(len(request.volumesWorldFromAnatomical)):
-                                transforms.append([x for x in request.volumesWorldFromAnatomical[i].data])
-                            msgdict['volumesWorldFromAnatomical'] = transforms 
+                            msgdict.update(self.capnp_message_to_dict(request))
                         with messages.ProjectResponse.from_bytes(project_response) as response:
+                            # msgdict.update(self.capnp_message_to_dict(response))
                             images_dict_ = []
-                            for i in range(len(response.images)):
-                                current_image = response.images[i]
-                                bytes = current_image.data
+                            for image in response.images:
+                                bytes = image.data
+                                print(type(bytes), bytes)
                                 base64_bytes = base64.b64encode(bytes)
                                 base64_string = base64_bytes.decode("ascii") 
                                 images_dict_.append(base64_string)
                                 
                                 image = Image.open(BytesIO(bytes))
-                                image_filename = str(response.requestId) + ".jpg"
-                                image_path = os.path.join(self.log_root_path, image_filename)
+                                image_filename = f"{requestId}.jpg"
+                                image_path = self.log_root_path / image_filename
                                 image.save(image_path)
                             msgdict['image'] = images_dict_
                             
                         # print(msgdict)
                         
                         # save msgdict to json
-                        json_filename = str(requestId) + ".json"
-                        json_path = os.path.join(self.log_root_path, json_filename)
+                        json_filename = f"{requestId}.json"
+                        json_path = self.log_root_path / json_filename
                         with open(json_path, 'w') as json_file:
                             json.dump(msgdict, json_file)
                             print(f"json file saved to {json_path}")
@@ -157,12 +144,42 @@ class SnapshotServer:
                 print(f"server exception: {e}")
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
 
+    def capnp_message_to_dict(self, message):
+        """
+        Converts a Cap'n Proto message to a dictionary, handling nested messages and lists.
+        """
+        capnp_dict = {}
+        for field in message.schema.fields:
+            field_value = getattr(message, field)
 
-    def __enter__(self):
-        return self
+            if isinstance(field_value, bytes):
+                print(f"field {field} = [{type(field_value)}]: {field_value}")
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+            # Recursively handle nested Cap'n Proto messages and lists
+            if isinstance(field_value, capnp.lib.capnp._DynamicStructReader):
+                capnp_dict[field] = self.capnp_message_to_dict(field_value)
+            elif isinstance(field_value, capnp.lib.capnp._DynamicListReader):
+                capnp_dict[field] = [
+                    self.capnp_message_to_dict(value) if isinstance(value, capnp.lib.capnp._DynamicStructReader) else value 
+                    for value in field_value
+                ]
+            else:
+                capnp_dict[field] = field_value
+        return capnp_dict
+    
+    async def save_image(data, img_path):
+        """
+        Asynchronously saves an image to the disk.
+        """
+        async with aiofiles.open(img_path, 'wb') as file:
+            await file.write(data)
+
+    async def save_json(data, json_path):
+        """
+        Asynchronously saves data to a JSON file.
+        """
+        async with aiofiles.open(json_path, 'w') as file:
+            await file.write(json.dumps(data, indent=4))
 
 
 @app.command()

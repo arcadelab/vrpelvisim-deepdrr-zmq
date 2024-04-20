@@ -195,6 +195,11 @@ struct ClientHeartbeat {
     clientId @0 :Text;
 }
 
+struct ProjectorHeartbeat {
+    status @0 :Bool;
+    projectorId @1 :Text;
+}
+
 struct SyncedSetting {
     timestamp @0 :Float64; # Timestamp of the setting
     clientId @1 :Text; # Client id
