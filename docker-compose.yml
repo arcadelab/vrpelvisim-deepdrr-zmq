@@ -10,6 +10,8 @@ services:
     environment:
       - PATIENT_DATA_DIR=/patientdata
       - LOG_DIR=/logdata
+      - REPLAY_LOG_DIR=/logdata/vrpslogs
+      - SNAPSHOT_LOG_DIR=/logdata/sslogs
       - DEEPDRR_DATA_DIR=/deepdrrcache
     volumes:
       # Patient data

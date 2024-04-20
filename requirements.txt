@@ -6,5 +6,6 @@ joblib
 more_itertools
 pyzmq
 pycapnp
+pymeshfix
 scipy
 typer

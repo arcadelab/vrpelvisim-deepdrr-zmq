@@ -384,7 +384,7 @@ def main(
     print(f"sub_port: {sub_port}")
 
     vrps_logs_dir_default = Path(r"logs/vrpslogs")
-    vrps_logs_dir = Path(os.environ.get("LOG_DIR", vrps_logs_dir_default)).resolve()
+    vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
     print(f"replay vrps_logs_dir: {vrps_logs_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:

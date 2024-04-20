@@ -25,6 +25,7 @@ dependencies:
       - pipenv
       - pyzmq
       - pycapnp
+      - pymeshfix
       - scipy
       - tqdm
       - typer

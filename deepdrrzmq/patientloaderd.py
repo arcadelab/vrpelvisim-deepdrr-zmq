@@ -20,6 +20,10 @@ from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
 from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
 
+from deepdrr.utils.mesh_utils import polydata_to_trimesh
+from trimesh.repair import fill_holes, fix_normals
+import pymeshfix
+
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
@@ -112,6 +116,26 @@ class PatientLoaderServer:
             except Exception as e:
                 print(f"patient_mesh_request error: {e}: {request.meshId}")
                 return
+            
+            # if taubin_smooth:
+            taubin_smooth_iter = 50
+            taubin_smooth_pass_band = 0.05
+            mesh = mesh.smooth_taubin(n_iter=taubin_smooth_iter, pass_band=taubin_smooth_pass_band)
+
+            # if decimation_points is not None and mesh.n_points > decimation_points:
+            # Decimate the surface to the desired number of points
+            # mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
+            mesh = mesh.decimate(0.5)
+            
+            # fill holes
+            mesh = pymeshfix.MeshFix(mesh)
+            mesh.repair(verbose=True)
+            mesh = mesh.mesh
+            
+            # fix winding order
+            trimesh_ = polydata_to_trimesh(mesh)
+            fix_normals(trimesh_)
+            mesh = pv.wrap(trimesh_)
 
             # create the response message
             msg = messages.MeshResponse.new_message()
@@ -119,7 +143,8 @@ class PatientLoaderServer:
             msg.status = make_response(0, "ok")
             msg.mesh.vertices = mesh.points.flatten().tolist()
             # todo: flip winding order on client side, not server
-            msg.mesh.faces = mesh.faces.reshape((-1, 4))[..., 1:][..., [0, 2, 1]].flatten().tolist() # flip winding order
+            # flip winding order to match Unity's convension
+            msg.mesh.faces = mesh.faces.reshape((-1, 4))[..., 1:][..., [0, 2, 1]].flatten().tolist()
 
             response_topic = "patient_mesh_response/"+meshId
 
