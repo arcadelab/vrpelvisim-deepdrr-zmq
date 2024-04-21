@@ -179,7 +179,6 @@ struct SyncedTransformUpdate {
     timestamp @0 :Float64; # Timestamp of the transformation matrix
     clientId @1 :Text; # Client id
     transforms @2 :List(Matrix4x4); # Transformation matrices
-    # triggerButtonPressed @3 :Bool; # Indicator for the trigger button state
 }
 
 # Sent from the Unity Client to the server (snapshotd.py) for snapshot capture
@@ -240,7 +239,7 @@ struct UIControlSettings  {
     webcorridorselection @5 :Int32 ; # The index of web selection
     flippatient @6 :Bool; # Flip patient bool
     viewIndicatorselfselect @7 :Bool; # View indicator self select bool
-    patientSwitchParam @8 :Int32; # +1: next patient, 0: same patient, -1: previous patient
+    patientCaseId @8 :Text; # Patient case id ("******")
 }
 
 struct LogFile {
