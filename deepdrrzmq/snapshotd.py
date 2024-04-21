@@ -45,6 +45,7 @@ class SnapshotServer:
         self.sub_port = sub_port
         self.log_root_path = log_root_path
         self.log_root_path.mkdir(parents=True, exist_ok=True)
+        self.json_queue = asyncio.Queue()
 
     def __enter__(self):
         return self
@@ -53,10 +54,11 @@ class SnapshotServer:
         pass
 
     async def start(self):
-        recorder_loop = self.logger_server()
-        await asyncio.gather(recorder_loop)
+        snapshot_logger_processor = asyncio.create_task(self.snapshot_logger_server())
+        json_processor = asyncio.create_task(self.process_json_queue())
+        await asyncio.gather(snapshot_logger_processor, json_processor)
 
-    async def logger_server(self):
+    async def snapshot_logger_server(self):
         """
         Server for logging snapshot data from the surgical simulation.
         """
@@ -79,7 +81,7 @@ class SnapshotServer:
         project_response = None
         while True:
             try:
-                latest_msgs = await zmq_poll_latest(sub_socket)
+                latest_msgs = await zmq_poll_latest(sub_socket, max_skip=0)
 
                 for topic, data in latest_msgs.items():
                     
@@ -109,36 +111,36 @@ class SnapshotServer:
                         with messages.ProjectRequest.from_bytes(project_request) as request:
                             msgdict.update(self.capnp_message_to_dict(request))
                         with messages.ProjectResponse.from_bytes(project_response) as response:
-                            # msgdict.update(self.capnp_message_to_dict(response))
-                            images_dict_ = []
-                            for image in response.images:
-                                bytes = image.data
-                                print(type(bytes), bytes)
-                                base64_bytes = base64.b64encode(bytes)
-                                base64_string = base64_bytes.decode("ascii") 
-                                images_dict_.append(base64_string)
+                            msgdict.update(self.capnp_message_to_dict(response))
+                            
+                            # images_dict_ = []
+                            # for image in response.images:
+                            #     bytes = image.data
+                            #     print(type(bytes), bytes)
+                            #     base64_bytes = base64.b64encode(bytes)
+                            #     base64_string = base64_bytes.decode("ascii") 
+                            #     images_dict_.append(base64_string)
                                 
-                                image = Image.open(BytesIO(bytes))
-                                image_filename = f"{requestId}.jpg"
-                                image_path = self.log_root_path / image_filename
-                                image.save(image_path)
-                            msgdict['image'] = images_dict_
+                            #     image = Image.open(BytesIO(bytes))
+                            #     image_filename = f"{requestId}.jpg"
+                            #     image_path = self.log_root_path / image_filename
+                            #     image.save(image_path)
+                            # msgdict['image'] = images_dict_
+                            pass
                             
                         # print(msgdict)
                         
                         # save msgdict to json
                         json_filename = f"{requestId}.json"
                         json_path = self.log_root_path / json_filename
-                        with open(json_path, 'w') as json_file:
-                            json.dump(msgdict, json_file)
-                            print(f"json file saved to {json_path}")
+                        await self.save_json(msgdict, json_path)
                             
                         requestId = None
                         snapshot_request = None
                         project_request = None
                         project_response = None
                         
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0)
 
             except DeepDRRServerException as e:
                 print(f"server exception: {e}")
@@ -152,9 +154,6 @@ class SnapshotServer:
         for field in message.schema.fields:
             field_value = getattr(message, field)
 
-            if isinstance(field_value, bytes):
-                print(f"field {field} = [{type(field_value)}]: {field_value}")
-
             # Recursively handle nested Cap'n Proto messages and lists
             if isinstance(field_value, capnp.lib.capnp._DynamicStructReader):
                 capnp_dict[field] = self.capnp_message_to_dict(field_value)
@@ -164,22 +163,26 @@ class SnapshotServer:
                     for value in field_value
                 ]
             else:
+                if isinstance(field_value, bytes):
+                    print(f"field {field} = [{type(field_value)}]: {field_value}")
+                    base64_bytes = base64.b64encode(field_value)
+                    base64_string = base64_bytes.decode("ascii")
+                    field_value = base64_string
                 capnp_dict[field] = field_value
         return capnp_dict
-    
-    async def save_image(data, img_path):
-        """
-        Asynchronously saves an image to the disk.
-        """
-        async with aiofiles.open(img_path, 'wb') as file:
-            await file.write(data)
 
-    async def save_json(data, json_path):
+    async def save_json(self, data, json_path):
         """
-        Asynchronously saves data to a JSON file.
+        Enqueues a task to save JSON data.
         """
-        async with aiofiles.open(json_path, 'w') as file:
-            await file.write(json.dumps(data, indent=4))
+        await self.json_queue.put((data, json_path))
+        
+    async def process_json_queue(self):
+        while True:
+            data, json_path = await self.json_queue.get()
+            async with aiofiles.open(json_path, 'w') as file:
+                await file.write(json.dumps(data, indent=4))
+            self.json_queue.task_done()
 
 
 @app.command()

@@ -119,19 +119,19 @@ class PatientLoaderServer:
             taubin_smooth_pass_band = 0.05
             mesh = mesh.smooth_taubin(n_iter=taubin_smooth_iter, pass_band=taubin_smooth_pass_band)
 
+            # decimate mesh using pyvista
+            decimation_points = 5000
+            if mesh.n_points > decimation_points:
+                # Decimate the surface to the desired number of points
+                mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
+            
+            # apply a triangle filter using pyvista to ensure the mesh is simply polyhedral
+            mesh = mesh.triangulate()
+            
             # fill holes using pymeshfix
             pymeshfix_ = mf.MeshFix(mesh)
             pymeshfix_.repair(verbose=True)
             mesh = pymeshfix_.mesh
-
-            # apply a triangle filter using pyvista to ensure the mesh is simply polyhedral
-            mesh = mesh.triangulate()
-
-            # decimate mesh using pyvista
-            decimation_points = 10000
-            if mesh.n_points > decimation_points:
-                # Decimate the surface to the desired number of points
-                mesh = mesh.decimate(1 - decimation_points / mesh.n_points)
             
             # fix winding order using trimesh
             trimesh_ = polydata_to_trimesh(mesh)
