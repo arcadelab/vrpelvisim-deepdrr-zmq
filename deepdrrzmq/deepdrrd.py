@@ -169,6 +169,8 @@ class DeepDRRServer:
 
         self.fps = timer_util.FPS(1) # FPS counter for projector
         
+        self.priority_request_queue = []    # queue for priority requests
+        
         # PATIENT_DATA_DIR environment variable is set by the docker container
         default_data_dir = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
         self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_data_dir))
@@ -197,6 +199,7 @@ class DeepDRRServer:
         pub_socket.connect(f"tcp://localhost:{self.pub_port}")
         sub_socket.connect(f"tcp://localhost:{self.sub_port}")
 
+        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/priority_project_request/")
         sub_socket.setsockopt(zmq.SUBSCRIBE, b"project_request/")
         sub_socket.setsockopt(zmq.SUBSCRIBE, b"projector_params_response/")
         sub_socket.setsockopt(zmq.SUBSCRIBE, b"/deepdrrd/in/")
@@ -204,7 +207,8 @@ class DeepDRRServer:
         while True:
 
             try:
-                latest_msgs = await zmq_poll_latest(sub_socket)
+                no_drop_topics = [b"/priority_project_request/"]
+                latest_msgs = await zmq_poll_latest(sub_socket, no_drop_topics=no_drop_topics)
 
                 if b"/deepdrrd/in/block/" in latest_msgs:
                     self.disable_until = time.time() + 10
@@ -214,16 +218,24 @@ class DeepDRRServer:
                     print("deepdrrd disabled")
                     continue
 
-                if b"project_request/" in latest_msgs:
-                    if await self.handle_project_request(pub_socket, latest_msgs[b"project_request/"]):
-                        if (f:=self.fps()) is not None:
-                            print(f"DRR project rate: {f:>5.2f} frames per second")
-
                 if b"projector_params_response/" in latest_msgs:
                     try:
                         await self.handle_projector_params_response(pub_socket, latest_msgs[b"projector_params_response/"])
                     except Exception as e:
                         raise DeepDRRServerException(1, f"error creating projector", e)
+
+                # handle queued priority requests
+                if self.priority_request_queue:
+                    request = self.priority_request_queue.pop(0)
+                    await self.handle_project_request(pub_socket, request, priority=True)
+                else:
+                    if b"/priority_project_request/" in latest_msgs:
+                        await self.handle_project_request(pub_socket, latest_msgs[b"/priority_project_request/"], priority=True)
+
+                    if b"project_request/" in latest_msgs:
+                        if await self.handle_project_request(pub_socket, latest_msgs[b"project_request/"]):
+                            if (f:=self.fps()) is not None:
+                                print(f"DRR project rate: {f:>5.2f} frames per second")
                 
                 # allow send_status heartbeat to run
                 await asyncio.sleep(0)
@@ -322,22 +334,25 @@ class DeepDRRServer:
 
             print(f"created projector {self.projector_id}")
 
-    async def handle_project_request(self, pub_socket, data):
+    async def handle_project_request(self, pub_socket, data, priority=False):
         """
         Handle a project request from the client.
 
         :param pub_socket: The socket to send the response on.
         :param data: The data of the request.
+        :param priority: Whether this is a priority request.
         """
+
+        project_response_topic = b"/priority_project_response/" if priority else b"/project_response/"
 
         with messages.ProjectRequest.from_bytes(data) as request:
 
             # If the projector is not initialized or the projector id is mismatched,
             # send a response with a loading image and request the projector params
-            if self.projector is None or request.projectorId != self.projector_id:
+            if self.projector is None or request.projectorId != self.projector_id:                
                 # send a response with a loading image
                 msg = messages.ProjectResponse.new_message()
-                msg.requestId = request.requestId
+                msg.requestId = "__projector_loading__"
                 msg.projectorId = request.projectorId
                 msg.status = make_response(0, "ok")
 
@@ -349,13 +364,17 @@ class DeepDRRServer:
                 pil_img.save(buffer, format="JPEG")
                 msg.images[0].data = buffer.getvalue()
                 
-                await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
+                await pub_socket.send_multipart([project_response_topic, msg.to_bytes()])
 
                 # request the projector params
                 msg = messages.ProjectorParamsRequest.new_message()
                 msg.projectorId = request.projectorId
                 await pub_socket.send_multipart([b"/projector_params_request/", msg.to_bytes()])
                 print(f"projector {request.projectorId} not found, requesting projector params")
+                
+                # check if this is a priority request
+                if priority:
+                    self.priority_request_queue.append(data)
                 
                 return False
 
@@ -413,7 +432,7 @@ class DeepDRRServer:
 
                 msg.images[i].data = buffer.getvalue()
 
-            await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
+            await pub_socket.send_multipart([project_response_topic, msg.to_bytes()])
 
             return True
         

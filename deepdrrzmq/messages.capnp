@@ -195,7 +195,7 @@ struct ClientHeartbeat {
 }
 
 struct ProjectorHeartbeat {
-    status @0 :Bool;
+    status @0 :Text;
     projectorId @1 :Text;
 }
 

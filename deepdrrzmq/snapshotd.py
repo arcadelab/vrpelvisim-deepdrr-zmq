@@ -72,8 +72,8 @@ class SnapshotServer:
         sub_socket.connect(f"tcp://localhost:{self.sub_port}")
 
         sub_socket.subscribe(b"/snapshot_request/")
-        sub_socket.subscribe(b"project_request/")
-        sub_socket.subscribe(b"/project_response/")
+        sub_socket.subscribe(b"/priority_project_request/")
+        sub_socket.subscribe(b"/priority_project_response/")
         
         requestId = None
             
@@ -86,24 +86,26 @@ class SnapshotServer:
                 latest_msgs = await zmq_poll_latest(sub_socket, max_skip=0)
 
                 for topic, data in latest_msgs.items():
+                    print(f"topic: {topic}")
                     
                     # this might not come first
                     if topic.startswith(b"/snapshot_request/"):
                         with messages.SnapshotRequest.from_bytes(data) as request:
-                            requestId = request.requestId
-                            snapshot_request = data
-                            project_request = None
-                            project_response = None
-                        print(f"snapshot request: {topic}")
+                            if request.requestId:
+                                requestId = request.requestId
+                                snapshot_request = data
+                                project_request = None
+                                project_response = None
+                            print(f"snapshot_request: {requestId}")
 
-                    if topic.startswith(b"project_request/"):
+                    if topic.startswith(b"/priority_project_request/"):
                         with messages.ProjectRequest.from_bytes(data) as request:
-                            if request.requestId == requestId:
+                            if request.requestId and request.requestId == requestId:
                                 project_request = data
                     
-                    if topic.startswith(b"/project_response/"):
+                    if topic.startswith(b"/priority_project_response/"):
                         with messages.ProjectResponse.from_bytes(data) as response:
-                            if response.requestId == requestId:
+                            if response.requestId and response.requestId == requestId:
                                 project_response = data
 
                     if snapshot_request and project_request and project_response:
@@ -120,7 +122,7 @@ class SnapshotServer:
                         patientCaseId = msgdict.get("patientCaseId")
                         standardViewName = msgdict.get("standardViewName")
                         standardViewCount = msgdict.get("standardViewCount")
-                        images_list = msgdict.get('images')
+                        image_list = msgdict.get('images')
                         
                         # create filename and file directory
                         filename = f"{userId}_{patientCaseId}_{standardViewName}_{standardViewCount}"
@@ -132,15 +134,10 @@ class SnapshotServer:
                         await self.save_json(msgdict, json_path)
                         
                         # save msgdict images
-                        for image_dict in images_list:
-                            image_base64_string = image_dict.get("data")
-                            image_base64_bytes = image_base64_string.encode("ascii")
-                            image_bytes = base64.b64decode(image_base64_bytes) 
-                            image = Image.open(BytesIO(image_bytes))
-                            image_path = file_dir / f"{filename}.jpg"
-                            image.save(image_path)
+                        self.save_image(image_list, file_dir, filename)
                             
                         requestId = None
+                        
                         snapshot_request = None
                         project_request = None
                         project_response = None
@@ -189,6 +186,18 @@ class SnapshotServer:
             async with aiofiles.open(json_path, 'w') as file:
                 await file.write(json.dumps(data, indent=4))
             self.json_queue.task_done()
+            
+    def save_image(self, image_list, file_dir, filename):
+        """
+        Save iamges from base64 strings to files.
+        """
+        for image_dict in image_list:
+            image_base64_string = image_dict.get("data")
+            image_base64_bytes = image_base64_string.encode("ascii")
+            image_bytes = base64.b64decode(image_base64_bytes) 
+            image = Image.open(BytesIO(image_bytes))
+            image_path = file_dir / f"{filename}.jpg"
+            image.save(image_path)
 
 
 @app.command()
