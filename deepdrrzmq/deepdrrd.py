@@ -332,10 +332,10 @@ class DeepDRRServer:
 
         with messages.ProjectRequest.from_bytes(data) as request:
 
-            # if the projector is not the same as the one in the request, send a response with a green loading image and request the projector params
-            # not initialized or projector id mismatch
+            # If the projector is not initialized or the projector id is mismatched,
+            # send a response with a loading image and request the projector params
             if self.projector is None or request.projectorId != self.projector_id:
-                # send a response with a green loading image
+                # send a response with a loading image
                 msg = messages.ProjectResponse.new_message()
                 msg.requestId = request.requestId
                 msg.projectorId = request.projectorId
@@ -343,21 +343,20 @@ class DeepDRRServer:
 
                 msg.init("images", 1)
 
-                # send loading image
-                green_loading_img = np.zeros((512, 512, 3), dtype=np.uint8)
-                green_loading_img[:, :, 1] = 255
-                pil_img = Image.fromarray(green_loading_img)
+                loading_img = np.zeros((512, 512, 3), dtype=np.uint8) # black
+                pil_img = Image.fromarray(loading_img)
                 buffer = io.BytesIO()
                 pil_img.save(buffer, format="JPEG")
                 msg.images[0].data = buffer.getvalue()
+                
                 await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
-
 
                 # request the projector params
                 msg = messages.ProjectorParamsRequest.new_message()
                 msg.projectorId = request.projectorId
                 await pub_socket.send_multipart([b"/projector_params_request/", msg.to_bytes()])
                 print(f"projector {request.projectorId} not found, requesting projector params")
+                
                 return False
 
             # create the camera projections
@@ -414,7 +413,6 @@ class DeepDRRServer:
 
                 msg.images[i].data = buffer.getvalue()
 
-            # await pub_socket.send_multipart([b"/project_response/", msg.images[0].data])
             await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
 
             return True
