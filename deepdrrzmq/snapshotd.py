@@ -76,9 +76,11 @@ class SnapshotServer:
         sub_socket.subscribe(b"/project_response/")
         
         requestId = None
+            
         snapshot_request = None
         project_request = None
         project_response = None
+        
         while True:
             try:
                 latest_msgs = await zmq_poll_latest(sub_socket, max_skip=0)
@@ -112,28 +114,31 @@ class SnapshotServer:
                             msgdict.update(self.capnp_message_to_dict(request))
                         with messages.ProjectResponse.from_bytes(project_response) as response:
                             msgdict.update(self.capnp_message_to_dict(response))
-                            
-                            # images_dict_ = []
-                            # for image in response.images:
-                            #     bytes = image.data
-                            #     print(type(bytes), bytes)
-                            #     base64_bytes = base64.b64encode(bytes)
-                            #     base64_string = base64_bytes.decode("ascii") 
-                            #     images_dict_.append(base64_string)
-                                
-                            #     image = Image.open(BytesIO(bytes))
-                            #     image_filename = f"{requestId}.jpg"
-                            #     image_path = self.log_root_path / image_filename
-                            #     image.save(image_path)
-                            # msgdict['image'] = images_dict_
-                            pass
-                            
-                        # print(msgdict)
+                        
+                        # extract fields from msgdict and create filename
+                        userId = msgdict.get("userId")
+                        patientCaseId = msgdict.get("patientCaseId")
+                        standardViewName = msgdict.get("standardViewName")
+                        standardViewCount = msgdict.get("standardViewCount")
+                        images_list = msgdict.get('images')
+                        
+                        # create filename and file directory
+                        filename = f"{userId}_{patientCaseId}_{standardViewName}_{standardViewCount}"
+                        file_dir = self.log_root_path / userId / patientCaseId / standardViewName
+                        file_dir.mkdir(parents=True, exist_ok=True)
                         
                         # save msgdict to json
-                        json_filename = f"{requestId}.json"
-                        json_path = self.log_root_path / json_filename
+                        json_path = file_dir / f"{filename}.json"
                         await self.save_json(msgdict, json_path)
+                        
+                        # save msgdict images
+                        for image_dict in images_list:
+                            image_base64_string = image_dict.get("data")
+                            image_base64_bytes = image_base64_string.encode("ascii")
+                            image_bytes = base64.b64decode(image_base64_bytes) 
+                            image = Image.open(BytesIO(image_bytes))
+                            image_path = file_dir / f"{filename}.jpg"
+                            image.save(image_path)
                             
                         requestId = None
                         snapshot_request = None
@@ -160,7 +165,8 @@ class SnapshotServer:
             # field_value is a bytes: convert to base64 string to make it JSON-serializable
             elif isinstance(field_value, bytes):
                 base64_bytes = base64.b64encode(field_value)
-                return base64_bytes.decode("ascii")    
+                base64_string = base64_bytes.decode("ascii")
+                return base64_string  
             return field_value
         
         capnp_dict = {}
