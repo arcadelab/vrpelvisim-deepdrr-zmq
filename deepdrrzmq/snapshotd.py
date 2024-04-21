@@ -150,25 +150,25 @@ class SnapshotServer:
         """
         Converts a Cap'n Proto message to a dictionary, handling nested messages and lists.
         """
+        def convert_field_value_type(field_value):
+            # field_value is a capnp.lib.capnp._DynamicStructReader
+            if isinstance(field_value, capnp.lib.capnp._DynamicStructReader):
+                return self.capnp_message_to_dict(field_value)
+            # field_value is a capnp.lib.capnp._DynamicListReader
+            elif isinstance(field_value, capnp.lib.capnp._DynamicListReader):
+                return [convert_field_value_type(value) for value in field_value]
+            # field_value is a bytes: convert to base64 string to make it JSON-serializable
+            elif isinstance(field_value, bytes):
+                base64_bytes = base64.b64encode(field_value)
+                return base64_bytes.decode("ascii")    
+            return field_value
+        
         capnp_dict = {}
         for field in message.schema.fields:
             field_value = getattr(message, field)
-
-            # Recursively handle nested Cap'n Proto messages and lists
-            if isinstance(field_value, capnp.lib.capnp._DynamicStructReader):
-                capnp_dict[field] = self.capnp_message_to_dict(field_value)
-            elif isinstance(field_value, capnp.lib.capnp._DynamicListReader):
-                capnp_dict[field] = [
-                    self.capnp_message_to_dict(value) if isinstance(value, capnp.lib.capnp._DynamicStructReader) else value 
-                    for value in field_value
-                ]
-            else:
-                if isinstance(field_value, bytes):
-                    print(f"field {field} = [{type(field_value)}]: {field_value}")
-                    base64_bytes = base64.b64encode(field_value)
-                    base64_string = base64_bytes.decode("ascii")
-                    field_value = base64_string
-                capnp_dict[field] = field_value
+            converted_field_value = convert_field_value_type(field_value)
+            capnp_dict[field] = converted_field_value
+        
         return capnp_dict
 
     async def save_json(self, data, json_path):
