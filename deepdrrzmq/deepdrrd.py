@@ -164,6 +164,7 @@ class DeepDRRServer:
 
         self.projector = None
         self.projector_id = ""
+        self.projector_loading = False
 
         self.volumes = []  # type: List[deepdrr.Volume]
 
@@ -271,6 +272,7 @@ class DeepDRRServer:
             
             self.projector = None
             self.projector_id = command.projectorId
+            self.projector_loading = True
                 
             await self.send_status(pub_socket)
             
@@ -333,6 +335,7 @@ class DeepDRRServer:
             self.projector.__enter__()
 
             print(f"created projector {self.projector_id}")
+            self.projector_loading = False
 
     async def handle_project_request(self, pub_socket, data, priority=False):
         """
@@ -456,7 +459,13 @@ class DeepDRRServer:
         :param pub_socket: The socket to send the status on.
         """
         msg = messages.ProjectorHeartbeat.new_message()
-        msg.status = self.projector is not None
+        # "NoProjector", "Loading", "Loaded"
+        if self.projector_loading:
+            msg.status = "Loading"
+        elif self.projector is None:
+            msg.status = "NoProjector"
+        else:
+            msg.status = "Loaded"
         msg.projectorId = self.projector_id
         await pub_socket.send_multipart([b"/projector_heartbeat/", msg.to_bytes()])
     
