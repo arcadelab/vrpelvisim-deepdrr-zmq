@@ -19,8 +19,8 @@ import string
 import base64 
 from PIL import Image
 from io import BytesIO
-import aiofiles
 import json
+from datetime import datetime
 
 
 # app = typer.Typer()
@@ -55,38 +55,24 @@ class SnapshotServer:
 
     async def start(self):
         snapshot_logger_processor = asyncio.create_task(self.snapshot_logger_server())
-        json_processor = asyncio.create_task(self.process_json_queue())
-        await asyncio.gather(snapshot_logger_processor, json_processor)
+        await asyncio.gather(snapshot_logger_processor)
 
     async def snapshot_logger_server(self):
         """
         Server for logging snapshot data from the surgical simulation.
         """
-        sub_socket = self.context.socket(zmq.SUB)
-        sub_socket.hwm = 10000
-
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-        sub_socket.connect(f"tcp://localhost:{self.sub_port}")
-
-        sub_socket.subscribe(b"/snapshot_request/")
-        sub_socket.subscribe(b"/priority_project_request/")
-        sub_socket.subscribe(b"/priority_project_response/")
+        sub_topic_list = [b"/snapshot_request/", b"/priority_project_request/", b"/priority_project_response/"]
+        sub_socket = self.zmq_setup_socket(self.sub_port, zmq.SUB, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(self.pub_port, zmq.PUB)
         
         requestId = None
-            
-        snapshot_request = None
-        project_request = None
-        project_response = None
+        snapshot_request = priority_project_request = priority_project_response = None
         
         while True:
             try:
                 latest_msgs = await zmq_poll_latest(sub_socket, max_skip=0)
 
                 for topic, data in latest_msgs.items():
-                    print(f"topic: {topic}")
                     
                     # this might not come first
                     if topic.startswith(b"/snapshot_request/"):
@@ -94,27 +80,27 @@ class SnapshotServer:
                             if request.requestId:
                                 requestId = request.requestId
                                 snapshot_request = data
-                                project_request = None
-                                project_response = None
+                                priority_project_request = None
+                                priority_project_response = None
                             print(f"snapshot_request: {requestId}")
 
                     if topic.startswith(b"/priority_project_request/"):
                         with messages.ProjectRequest.from_bytes(data) as request:
                             if request.requestId and request.requestId == requestId:
-                                project_request = data
+                                priority_project_request = data
                     
                     if topic.startswith(b"/priority_project_response/"):
                         with messages.ProjectResponse.from_bytes(data) as response:
                             if response.requestId and response.requestId == requestId:
-                                project_response = data
+                                priority_project_response = data
 
-                    if snapshot_request and project_request and project_response:
+                    if snapshot_request and priority_project_request and priority_project_response:
                         msgdict = {}
                         with messages.SnapshotRequest.from_bytes(snapshot_request) as request:
                             msgdict.update(self.capnp_message_to_dict(request))
-                        with messages.ProjectRequest.from_bytes(project_request) as request:
+                        with messages.ProjectRequest.from_bytes(priority_project_request) as request:
                             msgdict.update(self.capnp_message_to_dict(request))
-                        with messages.ProjectResponse.from_bytes(project_response) as response:
+                        with messages.ProjectResponse.from_bytes(priority_project_response) as response:
                             msgdict.update(self.capnp_message_to_dict(response))
                         
                         # extract fields from msgdict and create filename
@@ -125,28 +111,39 @@ class SnapshotServer:
                         image_list = msgdict.get('images')
                         
                         # create filename and file directory
-                        filename = f"{userId}_{patientCaseId}_{standardViewName}_{standardViewCount}"
-                        file_dir = self.log_root_path / userId / patientCaseId / standardViewName
+                        file_datetime = datetime.now().strftime("%Y%m%d_%H%M")
+                        filename = f"{file_datetime}_{userId}_{patientCaseId}_{standardViewName}_{standardViewCount}"
+                        file_dir = self.log_root_path / f"{file_datetime}_{userId}" / patientCaseId / standardViewName
                         file_dir.mkdir(parents=True, exist_ok=True)
                         
                         # save msgdict to json
                         json_path = file_dir / f"{filename}.json"
-                        await self.save_json(msgdict, json_path)
+                        self.save_json(msgdict, json_path)
                         
                         # save msgdict images
                         self.save_image(image_list, file_dir, filename)
                             
                         requestId = None
-                        
-                        snapshot_request = None
-                        project_request = None
-                        project_response = None
+                        snapshot_request = priority_project_request = priority_project_response = None
                         
                 await asyncio.sleep(0)
 
             except DeepDRRServerException as e:
                 print(f"server exception: {e}")
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
+
+    def zmq_setup_socket(self, port, socket_type, topic_list=None):
+        """ 
+        ZMQ socket setup.
+        """
+        socket = self.context.socket(socket_type)
+        socket.hwm = 10000
+        socket.connect(f"tcp://localhost:{port}")
+        
+        if topic_list:
+            for topic in topic_list:
+                socket.subscribe(topic)
+        return socket
 
     def capnp_message_to_dict(self, message):
         """
@@ -174,18 +171,15 @@ class SnapshotServer:
         
         return capnp_dict
 
-    async def save_json(self, data, json_path):
+    def save_json(self, data, json_path):
         """
-        Enqueues a task to save JSON data.
+        Saves JSON data to a file, with error handling.
         """
-        await self.json_queue.put((data, json_path))
-        
-    async def process_json_queue(self):
-        while True:
-            data, json_path = await self.json_queue.get()
-            async with aiofiles.open(json_path, 'w') as file:
-                await file.write(json.dumps(data, indent=4))
-            self.json_queue.task_done()
+        try:
+            with open(json_path, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4)
+        except IOError as e:
+            print(f"Error writing to file {json_path}: {e}")
             
     def save_image(self, image_list, file_dir, filename):
         """

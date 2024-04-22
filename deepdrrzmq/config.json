@@ -1,9 +1,7 @@
 {
     "network": {
-      "addr": "localhost",
-      "addr_localhost": "localhost",
       "addr_ip_eth": "128.220.12.196",
-      "addr_ip_danny": "172.16.92.40",
+      "addr_localhost": "localhost",
       "rep_port": 40120,
       "pub_port": 40121,
       "sub_port": 40122,
