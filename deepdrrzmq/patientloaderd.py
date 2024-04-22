@@ -64,8 +64,8 @@ class PatientLoaderServer:
         pub_socket.connect(f"tcp://localhost:{self.pub_port}")
         sub_socket.connect(f"tcp://localhost:{self.sub_port}")
 
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"patient_mesh_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"patient_anno_request/")
+        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/patient_mesh_request/")
+        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/patient_anno_request/")
 
         while True:
             try:
@@ -76,9 +76,9 @@ class PatientLoaderServer:
 
                 # process all most recent messages received since the last time we checked
                 for topic, data in latest_msgs.items():
-                    if topic == b"patient_mesh_request/":
+                    if topic == b"/patient_mesh_request/":
                         await self.handle_patient_mesh_request(pub_socket, data)
-                    elif topic == b"patient_anno_request/":
+                    elif topic == b"/patient_anno_request/":
                         await self.handle_patient_annotation_request(pub_socket, data)
 
             except DeepDRRServerException as e:
@@ -147,7 +147,7 @@ class PatientLoaderServer:
             # flip winding order to match clinet's (Unity) convension
             msg.mesh.faces = mesh.faces.reshape((-1, 4))[..., 1:][..., [0, 2, 1]].flatten().tolist()
 
-            response_topic = f"patient_mesh_response/{meshId}"
+            response_topic = f"/patient_mesh_response/{meshId}"
 
             await pub_socket.send_multipart([response_topic.encode(), msg.to_bytes()])
             print(f"sent mesh response {response_topic}")
@@ -191,7 +191,7 @@ class PatientLoaderServer:
             for i, controlPoint in enumerate(controlPoints):
                 msg.anno.controlPoints[i].position.data = controlPoint["position"]
 
-            response_topic = "patient_anno_response/"+annoId
+            response_topic = f"/patient_anno_response/{annoId}"
 
             await pub_socket.send_multipart([response_topic.encode(), msg.to_bytes()])
             print(f"sent annotation response {response_topic}")
