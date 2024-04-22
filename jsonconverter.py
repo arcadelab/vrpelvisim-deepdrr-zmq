@@ -41,7 +41,7 @@ def extract_topic_data_from_log(log_file,log_folder_path):
             with messages.Time.from_bytes(entry.data) as time:
                 msgdict['time'] = time.millis 
 
-        if topic.startswith("project_request/"):
+        if topic.startswith("/project_request/"):
             with messages.ProjectRequest.from_bytes(entry.data) as request:
                 msgdict['requestId'] = request.requestId
                 msgdict['projectorId'] = request.projectorId

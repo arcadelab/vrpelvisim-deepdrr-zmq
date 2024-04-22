@@ -91,7 +91,7 @@ async def request_loop():
             project_request.cameraProjections[0].intrinsic.sensorHeight = resolution
             project_request.cameraProjections[0].intrinsic.pixelSize = pixelSize
 
-        await pub_socket.send_multipart([b"project_request/", project_request.to_bytes()])
+        await pub_socket.send_multipart([b"/project_request/", project_request.to_bytes()])
 
         # print(f"sending: {project_request}")
 
@@ -145,7 +145,7 @@ async def receive_loop():
                     msg.projectorParams.photonCount = 10
                     msg.projectorParams.step = 2
 
-                    await pub_socket.send_multipart([b"projector_params_response/", msg.to_bytes()])
+                    await pub_socket.send_multipart([b"/projector_params_response/", msg.to_bytes()])
         else:
             print(f"unknown topic: {topic}")
 

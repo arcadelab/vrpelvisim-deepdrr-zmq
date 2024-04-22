@@ -201,8 +201,8 @@ class DeepDRRServer:
         sub_socket.connect(f"tcp://localhost:{self.sub_port}")
 
         sub_socket.setsockopt(zmq.SUBSCRIBE, b"/priority_project_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"project_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"projector_params_response/")
+        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/project_request/")
+        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/projector_params_response/")
         sub_socket.setsockopt(zmq.SUBSCRIBE, b"/deepdrrd/in/")
 
         while True:
@@ -219,9 +219,9 @@ class DeepDRRServer:
                     print("deepdrrd disabled")
                     continue
 
-                if b"projector_params_response/" in latest_msgs:
+                if b"/projector_params_response/" in latest_msgs:
                     try:
-                        await self.handle_projector_params_response(pub_socket, latest_msgs[b"projector_params_response/"])
+                        await self.handle_projector_params_response(pub_socket, latest_msgs[b"/projector_params_response/"])
                     except Exception as e:
                         raise DeepDRRServerException(1, f"error creating projector", e)
 
@@ -233,8 +233,8 @@ class DeepDRRServer:
                     if b"/priority_project_request/" in latest_msgs:
                         await self.handle_project_request(pub_socket, latest_msgs[b"/priority_project_request/"], priority=True)
 
-                    if b"project_request/" in latest_msgs:
-                        if await self.handle_project_request(pub_socket, latest_msgs[b"project_request/"]):
+                    if b"/project_request/" in latest_msgs:
+                        if await self.handle_project_request(pub_socket, latest_msgs[b"/project_request/"]):
                             if (f:=self.fps()) is not None:
                                 print(f"DRR project rate: {f:>5.2f} frames per second")
                 
