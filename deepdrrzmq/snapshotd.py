@@ -1,29 +1,20 @@
 import asyncio
-import os
-
-import logging
-from pathlib import Path
-
 import capnp
+import os
 import typer
 import zmq.asyncio
-import time
+from pathlib import Path
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
-
 from .utils.typer_util import unwrap_typer_param
 from .utils.server_util import make_response, DeepDRRServerException, messages
-import random
-import string
 
-
-import base64 
-from PIL import Image
-from io import BytesIO
 import json
+import base64 
+from io import BytesIO
+from PIL import Image
 from datetime import datetime
 
 
-# app = typer.Typer()
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
