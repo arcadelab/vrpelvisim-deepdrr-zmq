@@ -36,7 +36,6 @@ class SnapshotServer:
         self.sub_port = sub_port
         self.log_root_path = log_root_path
         self.log_root_path.mkdir(parents=True, exist_ok=True)
-        self.json_queue = asyncio.Queue()
 
     def __enter__(self):
         return self
@@ -102,9 +101,9 @@ class SnapshotServer:
                         image_list = msgdict.get('images')
                         
                         # create filename and file directory
-                        file_datetime = datetime.now().strftime("%Y%m%d_%H%M")
+                        file_datetime = datetime.now().strftime("%Y%m%d-%H%M%S")
                         filename = f"{file_datetime}_{userId}_{patientCaseId}_{standardViewName}_{standardViewCount}"
-                        file_dir = self.log_root_path / f"{file_datetime}_{userId}" / patientCaseId / standardViewName
+                        file_dir = self.log_root_path / userId / patientCaseId / standardViewName
                         file_dir.mkdir(parents=True, exist_ok=True)
                         
                         # save msgdict to json
