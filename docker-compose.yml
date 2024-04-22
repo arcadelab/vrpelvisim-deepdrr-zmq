@@ -33,12 +33,12 @@ services:
       dockerfile: ./Dockerfile
     deploy:
       resources:
-        limits:
-          cpus: '0.50'
-          memory: 12G
+        # limits:
+          # cpus: '0.50'
+          # memory: 12G
         reservations:
-          cpus: '0.25'
-          memory: 8G
+          # cpus: '0.25'
+          # memory: 8G
           devices:
             - driver: nvidia
               count: all
