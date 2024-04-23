@@ -173,8 +173,10 @@ class DeepDRRServer:
         self.priority_request_queue = []    # queue for priority requests
         
         # PATIENT_DATA_DIR environment variable is set by the docker container
-        default_data_dir = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
-        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_data_dir))
+        # patient_data_dir_default = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
+        # patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
+        patient_data_dir_default = Path("/home/virtualpelvislab/datasets/NMDID-ARCADE")
+        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", patient_data_dir_default))
         print(f"patient data dir: {self.patient_data_dir}")
         logging.info(f"patient data dir: {self.patient_data_dir}")
 

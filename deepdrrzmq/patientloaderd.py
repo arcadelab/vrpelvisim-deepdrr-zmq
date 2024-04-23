@@ -46,7 +46,8 @@ class PatientLoaderServer:
         self.sub_port = sub_port
 
         # PATIENT_DATA_DIR environment variable is set by the docker container
-        patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
+        # patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
+        patient_data_dir_default = Path("/home/virtualpelvislab/datasets/NMDID-ARCADE")
         self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", patient_data_dir_default))
         logging.info(f"patient_data_dir: {self.patient_data_dir}")
 
