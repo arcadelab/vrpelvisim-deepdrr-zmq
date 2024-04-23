@@ -1,6 +1,6 @@
 # PelvisVR Server
 
-[![Docker](https://github.com/arcadelab/pelvisvr-deepdrr-zmq/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/arcadelab/pelvisvr-deepdrr-zmq/actions/workflows/docker-publish.yml)
+[![Docker](https://github.com/arcadelab/vrpelvisim-deepdrr-zmq/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/arcadelab/vrpelvisim-deepdrr-zmq/actions/workflows/docker-publish.yml)
 
 <!-- ZMQ/Capnp interface for [DeepDRR](https://github.com/arcadelab/deepdrr). -->
 
@@ -29,7 +29,7 @@ Please follow the [official Docker installation guide](https://docs.docker.com/d
 
 ## Setting Up the Environment
 
-Open your terminal or command prompt and navigate to the root directory of the `pelvisvr-deepdrr-zmq` repository.
+Open your terminal or command prompt and navigate to the root directory of the `vrpelvisim-deepdrr-zmq` repository.
 
 1. Create a `.env` file in the root directory:
     ```bash
@@ -44,11 +44,11 @@ Open your terminal or command prompt and navigate to the root directory of the `
 
 ## Running the Application
 
-Open your terminal or command prompt and navigate to the root directory of the `pelvisvr-deepdrr-zmq` repository.
+Open your terminal or command prompt and navigate to the root directory of the `vrpelvisim-deepdrr-zmq` repository.
 
-1. Pull the latest Docker image for the `pelvisvr-deepdrr-zmq` application:
+1. Pull the latest Docker image for the `vrpelvisim-deepdrr-zmq` application:
     ```bash
-    docker pull ghcr.io/arcadelab/pelvisvr-deepdrr-zmq:main
+    docker pull ghcr.io/arcadelab/vrpelvisim-deepdrr-zmq:main
     ```
 2. Start the application using Docker Compose:
     ```bash

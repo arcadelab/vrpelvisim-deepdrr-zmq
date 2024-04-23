@@ -9,17 +9,18 @@ dist
 build
 docs/build
 output
+# examples
 
 # DeepDRR
 deepdrr/model_segmentation.pth.tar
 **flycheck*.py
-# examples
+deepdrrcache
 
 # Logs
 logs
 *.log
-*.pvrlog
-logs.*
+*.vrpslog
+log*.*
 logs*.*
 
 # Byte-compiled / optimized / DLL files

@@ -1,7 +1,6 @@
-version: "3.9"
 services:
-  pelvisvr-deepdrr-zmq:
-    image: ghcr.io/arcadelab/pelvisvr-deepdrr-zmq:main
+  vrpelvisim-deepdrr-zmq:
+    image: ghcr.io/arcadelab/vrpelvisim-deepdrr-zmq:main
     restart: unless-stopped
     ports:
       - "40120:40120"
@@ -10,6 +9,8 @@ services:
     environment:
       - PATIENT_DATA_DIR=/patientdata
       - LOG_DIR=/logdata
+      - REPLAY_LOG_DIR=/logdata/vrpslogs
+      - SNAPSHOT_LOG_DIR=/logdata/sslogs
       - DEEPDRR_DATA_DIR=/deepdrrcache
     volumes:
       # Patient data

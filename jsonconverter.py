@@ -5,10 +5,14 @@ import capnp
 from PIL import Image
 from io import BytesIO
 
-messages = capnp.load("deepdrr_zmq/deepdrrzmq/messages.capnp")
+file_path = Path(__file__).resolve().parent / "deepdrrzmq/messages.capnp"
+messages = capnp.load(str(file_path))
+
+
 def extract_topic_data_from_log(log_file,log_folder_path):
     entries = messages.LogEntry.read_multiple_bytes(log_file.read_bytes())
     topic_data = []
+    triggered_transform_data = []
     unique_topics = []
     i = 0
     image_idx = 0
@@ -16,8 +20,8 @@ def extract_topic_data_from_log(log_file,log_folder_path):
         topic = entry.topic.decode('utf-8')
         msgdict = {'topic': topic}
         file_name = os.path.splitext(log_file.name)[0] 
-        file_number = file_name.split("--")[-1] 
-        # print(file_number + ' file '+str(len(topic_data))+' '+topic)#for debug
+        file_number = file_name.split("--")[-1]
+        
         if topic not in unique_topics:  # Add unique topics to the list
             unique_topics.append(topic)
 
@@ -30,7 +34,9 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                 for i in range(len(transform.transforms)):
                     transforms.append([x for x in transform.transforms[i].data])
                 msgdict['transforms'] = transforms
+                msgdict['triggerButtonPressed'] = transform.triggerButtonPressed
                 # msgdict['transforms'] = transform_dict 
+        
         if topic.startswith("/mp/time/"):
             with messages.Time.from_bytes(entry.data) as time:
                 msgdict['time'] = time.millis 
@@ -56,8 +62,11 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                 for i in range(len(request.volumesWorldFromAnatomical)):
                     transforms.append([x for x in request.volumesWorldFromAnatomical[i].data])
                 msgdict['volumesWorldFromAnatomical'] = transforms 
+        
+        # TODO: fix for using CapnpGen.ProjectResponse instead of byte[]
         if topic.startswith("/project_response/"):
-        #     decode  the jpeg image from the bytes
+            # decode the jpeg image from byte[]
+            print(f"enter project response")
             image = Image.open(BytesIO(entry.data))
             image_filename = str(image_idx) + ".jpg"
             image_path = os.path.join(log_folder_path, image_filename)
@@ -65,7 +74,7 @@ def extract_topic_data_from_log(log_file,log_folder_path):
             image_idx += 1
 
         if topic.startswith("/mp/setting"):
-            with messages.SycnedSetting.from_bytes(entry.data) as setting_data:
+            with messages.SyncedSetting.from_bytes(entry.data) as setting_data:
                 setting_data_dict = {}
                 msgdict['timestamp'] = setting_data.timestamp
                 msgdict['clientId'] = setting_data.clientId
@@ -84,25 +93,52 @@ def extract_topic_data_from_log(log_file,log_folder_path):
                 if which == 'arm':     
                     setting = setting_data.setting.arm.liveCapture  
                     msgdict['liveCapture'] = setting          
+        
         topic_data.append(msgdict)
-    return topic_data, unique_topics
-def convert_pvrlog_to_json(log_folder):
+    
+    last_request = 0
+    snapshot_requests = []
+    for idx, topic in enumerate(topic_data):
+        if 'cameraProjections' in topic:
+            last_request = idx
+        elif 'triggerButtonPressed' in topic and topic['triggerButtonPressed']:
+            if not snapshot_requests or snapshot_requests[-1] != last_request:
+                snapshot_requests.append(last_request)
+
+    print(snapshot_requests)
+    for idx in snapshot_requests:
+        triggered_transform_data.append(topic_data[idx])
+
+    return topic_data, triggered_transform_data, unique_topics # return topic_data, unique_topics
+
+
+def convert_vrpslog_to_json(log_folder):
     log_folder_path = Path(log_folder)
-    pvrlog_files = log_folder_path.glob("*.pvrlog")
-    for log_file in pvrlog_files:
-        json_file_path = log_folder_path /f"{log_file.stem}.json"
+    vrpslog_files = log_folder_path.glob("*.vrpslog")
+    for log_file in vrpslog_files:
         img_folder_path = log_folder_path / f"image"
-        os.makedirs(img_folder_path, exist_ok=True)
-        topic_data ,unique_topics= extract_topic_data_from_log(log_file,img_folder_path)
+        json_file_path = log_folder_path / f"{log_file.stem}.json"
+        triggered_json_file_path = log_folder_path / f"{log_file.stem}_triggered_transform_data.json"
+        img_folder_path.mkdir(parents=True, exist_ok=True)
+
+        topic_data, triggered_transform_data, unique_topics = extract_topic_data_from_log(log_file, img_folder_path)
+        
         with open(json_file_path, 'w') as json_file:
             json.dump(topic_data, json_file, indent=4)
-        # print(f"Converted {log_file.name} to JSON.")#for debug
+        print(f"Outputted transform data to {json_file_path}")
+        
+        with open(triggered_json_file_path, 'w') as json_file:
+            json.dump(triggered_transform_data, json_file, indent=4)
+        print(f"Outputted triggered transform data to {triggered_json_file_path}")
+            
+        # print(f"Converted {log_file.name} to JSON.") # for debug
     # print('--------------Unique Topics--------------')
     # for topic in unique_topics:
     #     print(topic)
     print('---------------Convert Complete--------------')
 
+
 if __name__ == '__main__':
-    # log_folder = input("Enter the folder path containing .pvrlog files: ")
-    log_folder = "C:/vrplog/zggdi8m5m8aql2bn--2023-06-24-23-39-57"
-    convert_pvrlog_to_json(log_folder)
+    log_dir = Path('/home/virtualpelvislab/logdata')
+    log_data = Path(log_dir) / "3vxmqjw2jmicqrg6--2024-04-07-01-15-19"
+    convert_vrpslog_to_json(log_data)

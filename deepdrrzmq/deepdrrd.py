@@ -79,10 +79,17 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
     """
 
     # if niftiParams.path is a relative path, make it relative to the patient data directory
-    if not Path(niftiParams.path).expanduser().is_absolute():
-        niftiPath = str(patient_data_dir / niftiParams.path)
+    niftiParamsPath = Path(niftiParams.path)
+    if not niftiParamsPath.expanduser().is_absolute():
+        niftiWildcardsPath = patient_data_dir / niftiParamsPath
     else:
-        niftiPath = niftiParams.path
+        niftiWildcardsPath = niftiParamsPath
+        
+    niftiCaseDir = niftiWildcardsPath.parent
+    niftiVolumeName = niftiWildcardsPath.name
+    niftiPaths = sorted(niftiCaseDir.glob(niftiVolumeName)) + [niftiWildcardsPath]
+    niftiPath = str(niftiPaths[0])
+    print(f"niftiPath [{type(niftiPath)}]: {niftiPath}")
 
     niftiVolume = from_nifti_cached(
         path=niftiPath,
@@ -165,7 +172,7 @@ class DeepDRRServer:
         # PATIENT_DATA_DIR environment variable is set by the docker container
         default_data_dir = Path("/mnt/d/jhonedrive/Johns Hopkins/Benjamin D. Killeen - NMDID-ARCADE/")  # TODO: remove
         self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_data_dir))
-
+        print(f"patient data dir: {self.patient_data_dir}")
         logging.info(f"patient data dir: {self.patient_data_dir}")
 
     async def start(self):
@@ -174,7 +181,8 @@ class DeepDRRServer:
         """
 
         project = self.project_server()
-        await asyncio.gather(project)
+        status_loop = self.status_server()
+        await asyncio.gather(project, status_loop)
 
     async def project_server(self):
         """
@@ -213,9 +221,12 @@ class DeepDRRServer:
 
                 if b"projector_params_response/" in latest_msgs:
                     try:
-                        await self.handle_projector_params_response(latest_msgs[b"projector_params_response/"])
+                        await self.handle_projector_params_response(pub_socket, latest_msgs[b"projector_params_response/"])
                     except Exception as e:
                         raise DeepDRRServerException(1, f"error creating projector", e)
+                
+                # allow send_status heartbeat to run
+                await asyncio.sleep(0)
 
             except DeepDRRServerException as e:
                 print(f"server exception: {e}")
@@ -231,7 +242,7 @@ class DeepDRRServer:
         if self.projector is not None:
             self.projector.__exit__(exc_type, exc_value, traceback)
 
-    async def handle_projector_params_response(self, data):
+    async def handle_projector_params_response(self, pub_socket, data):
         """
         Handle a projector params response from the client.
         
@@ -242,7 +253,15 @@ class DeepDRRServer:
         with messages.ProjectorParamsResponse.from_bytes(data) as command:
             if self.projector_id == command.projectorId:
                 return
-
+            
+            if self.projector is not None:
+                self.projector.__exit__(None, None, None)
+            
+            self.projector = None
+            self.projector_id = command.projectorId
+                
+            await self.send_status(pub_socket)
+            
             print(f"creating projector {command.projectorId}")
 
             projectorParams = command.projectorParams
@@ -281,12 +300,7 @@ class DeepDRRServer:
                 pixel_size=deviceParams.camera.intrinsic.pixelSize,
                 source_to_detector_distance=deviceParams.camera.intrinsic.sourceToDetectorDistance,
                 world_from_device=geo.frame_transform(capnp_square_matrix(deviceParams.camera.extrinsic)),
-            )
-
-            if self.projector is not None:
-                self.projector.__exit__(None, None, None)
-                self.projector = None
-                self.projector_id = ""
+            )            
 
             self.projector = Projector(
                 volume=self.volumes,
@@ -305,7 +319,6 @@ class DeepDRRServer:
                 attenuate_outside_volume=projectorParams.attenuateOutsideVolume,
             )
             self.projector.__enter__()
-            self.projector_id = command.projectorId
 
             print(f"created projector {self.projector_id}")
 
@@ -320,8 +333,8 @@ class DeepDRRServer:
         with messages.ProjectRequest.from_bytes(data) as request:
 
             # if the projector is not the same as the one in the request, send a response with a green loading image and request the projector params
+            # not initialized or projector id mismatch
             if self.projector is None or request.projectorId != self.projector_id:
-
                 # send a response with a green loading image
                 msg = messages.ProjectResponse.new_message()
                 msg.requestId = request.requestId
@@ -330,6 +343,7 @@ class DeepDRRServer:
 
                 msg.init("images", 1)
 
+                # send loading image
                 green_loading_img = np.zeros((512, 512, 3), dtype=np.uint8)
                 green_loading_img[:, :, 1] = 255
                 pil_img = Image.fromarray(green_loading_img)
@@ -400,10 +414,34 @@ class DeepDRRServer:
 
                 msg.images[i].data = buffer.getvalue()
 
-            await pub_socket.send_multipart([b"/project_response/", msg.images[0].data])
-            # await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
+            # await pub_socket.send_multipart([b"/project_response/", msg.images[0].data])
+            await pub_socket.send_multipart([b"/project_response/", msg.to_bytes()])
 
             return True
+        
+    async def status_server(self):
+        """
+        Server for sending the status of the DRR projector.
+        """
+        pub_socket = self.context.socket(zmq.PUB)
+        pub_socket.hwm = 10000
+
+        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+
+        while True:
+            await asyncio.sleep(1)
+            await self.send_status(pub_socket)
+            
+    async def send_status(self, pub_socket):
+        """
+        Send the status of the DRR projector.
+        
+        :param pub_socket: The socket to send the status on.
+        """
+        msg = messages.ProjectorHeartbeat.new_message()
+        msg.status = self.projector is not None
+        msg.projectorId = self.projector_id
+        await pub_socket.send_multipart([b"/projector_heartbeat/", msg.to_bytes()])
     
 
 
@@ -414,8 +452,6 @@ def main(
         pub_port=typer.Argument(40121),
         sub_port=typer.Argument(40122),
 ):
-
-    # print arguments
     print(f"rep_port: {rep_port}")
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")

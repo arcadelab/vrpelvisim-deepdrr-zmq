@@ -39,7 +39,7 @@ class LogReplayer:
     @property
     def allfiles(self):
         if self._allfiles is None:
-            listfiles = list(Path(self.logfolderpath).glob("*.pvrlog"))
+            listfiles = list(Path(self.logfolderpath).glob("*.vrpslog"))
             self._allfiles = sorted(listfiles, key=lambda x: int(x.stem.split("--")[-1]))
             print(f"allfiles: {self._allfiles} {self.logfolderpath}")
         return self._allfiles
@@ -375,20 +375,20 @@ class LogReplayServer:
 @app.command()
 @unwrap_typer_param
 def main(
-        rep_port=typer.Argument(40120),
-        pub_port=typer.Argument(40121),
-        sub_port=typer.Argument(40122),
+    rep_port=typer.Argument(40120),
+    pub_port=typer.Argument(40121),
+    sub_port=typer.Argument(40122),
 ):
     print(f"rep_port: {rep_port}")
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")
 
-    log_root_path = Path("pvrlogs") 
-    log_root_path = Path(os.environ.get("LOG_DIR", log_root_path))
-    print(f"log_root_path: {log_root_path}")
+    vrps_logs_dir_default = Path(r"logs/vrpslogs")
+    vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
+    print(f"replay vrps_logs_dir: {vrps_logs_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with LogReplayServer(context, rep_port, pub_port, sub_port, log_root_path) as time_server:
+        with LogReplayServer(context, rep_port, pub_port, sub_port, vrps_logs_dir) as time_server:
             asyncio.run(time_server.start())
 
 

@@ -173,17 +173,33 @@ struct Vector3 {
     data @0 :List(Float32);
 }
 
+# Used for sending unity transforms between the clients
+# Used for the CArms and multiplayer tools
 struct SyncedTransformUpdate {
     timestamp @0 :Float64; # Timestamp of the transformation matrix
     clientId @1 :Text; # Client id
     transforms @2 :List(Matrix4x4); # Transformation matrices
 }
 
+# Sent from the Unity Client to the server (snapshotd.py) for snapshot capture
+struct SnapshotRequest {
+    requestId @0 :Text; # Unique project request id
+    userId @1 :Text; # User ID
+    patientCaseId @2 :Text; # Patient case ID
+    standardViewName @3 :Text; # Standard view name
+    standardViewCount @4 :Int32; # Standard view count
+}
+
 struct ClientHeartbeat {
     clientId @0 :Text;
 }
 
-struct SycnedSetting {
+struct ProjectorHeartbeat {
+    status @0 :Bool;
+    projectorId @1 :Text;
+}
+
+struct SyncedSetting {
     timestamp @0 :Float64; # Timestamp of the setting
     clientId @1 :Text; # Client id
     setting :union {
@@ -194,7 +210,7 @@ struct SycnedSetting {
         long @6 :Int64;
         string @7 :Text;
         arm @8 :CArmSettings;
-        uiControl @9 :UIControlSetting;#Need add
+        uiControl @9 :UIControlSettings; #Need add
     }
 }
 
@@ -213,16 +229,17 @@ struct LoggerStatus {
     sessionId @1 :Text; # Session id of the logger
 }
 
-#06/12 -webIU
-struct UIControlSetting  {
+# WebUI
+struct UIControlSettings  {
     patientMaterial @0 :Int32; # Skin opaque/transparent  
     annotationError @1 :List(Text); # Session id of the logger
     corridorIndicator @2 :Bool; # All corridor indicator bool
     carmIndicator @3 :Bool; # C-arm indicator bool
-    webcorridorerrorselect @4 :Bool;#corridorErrorWebControl
-    webcorridorselection @5 :Int32 ;#the index of web selection
+    webcorridorerrorselect @4 :Bool; # Corridor error web control
+    webcorridorselection @5 :Int32 ; # The index of web selection
     flippatient @6 :Bool; # Flip patient bool
     viewIndicatorselfselect @7 :Bool; # View indicator self select bool
+    patientCaseId @8 :Text; # Patient case id ("******")
 }
 
 struct LogFile {

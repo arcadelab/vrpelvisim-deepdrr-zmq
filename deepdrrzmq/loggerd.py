@@ -149,7 +149,7 @@ class LogRecorder:
 
         date_string = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         log_foldername = f"{self.session_id}--{date_string}"
-        log_filename = f"{self.session_id}--{date_string}--%d.pvrlog"
+        log_filename = f"{self.session_id}--{date_string}--%d.vrpslog"
 
         log_folder = Path(self.log_root_path) / log_foldername
         log_folder.mkdir(parents=True, exist_ok=True)
@@ -287,22 +287,20 @@ class LoggerServer:
 @app.command()
 @unwrap_typer_param
 def main(
-        rep_port=typer.Argument(40120),
-        pub_port=typer.Argument(40121),
-        sub_port=typer.Argument(40122),
-        # log_root_path=typer.Argument("pvrlogs")
+    rep_port=typer.Argument(40120),
+    pub_port=typer.Argument(40121),
+    sub_port=typer.Argument(40122),
 ):
-
     print(f"rep_port: {rep_port}")
     print(f"pub_port: {pub_port}")
     print(f"sub_port: {sub_port}")
 
-    log_root_path = Path("pvrlogs") 
-    log_root_path = Path(os.environ.get("LOG_DIR", log_root_path))
-    print(f"log_root_path: {log_root_path}")
+    vrps_logs_dir_default = Path(r"logs/vrpslogs")
+    vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
+    print(f"logger vrps_logs_dir: {vrps_logs_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with LoggerServer(context, rep_port, pub_port, sub_port, log_root_path) as time_server:
+        with LoggerServer(context, rep_port, pub_port, sub_port, vrps_logs_dir) as time_server:
             asyncio.run(time_server.start())
 
 
