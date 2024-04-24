@@ -144,7 +144,7 @@ class DeepDRRServer:
     """
     def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm):
         """
-        Create a new DeepDRR server.
+        Create a new DeepDRR server instance.
         
         :param context: The zmq context.
         :param addr: The address of the ZMQ server.
@@ -487,7 +487,7 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
     hwm = config_network['hwm']
 
     print(f"""
-    [deepdrrd]
+    [{Path(__file__).stem}]
         addr: {addr}
         rep_port: {rep_port}
         pub_port: {pub_port}

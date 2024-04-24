@@ -5,6 +5,7 @@ import typer
 import zmq.asyncio
 from pathlib import Path
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
+from deepdrrzmq.utils.config_util import config_path, load_config
 from .utils.typer_util import unwrap_typer_param
 from .utils.server_util import make_response, DeepDRRServerException, messages
 
@@ -22,18 +23,24 @@ class SnapshotServer:
     """
     Server for logging snapshot data from the surgical simulation.
     """
-    def __init__(self, context, rep_port, pub_port, sub_port, log_root_path):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm, log_root_path):
         """
-        :param context: The zmq context to use.
-        :param rep_port: The port to use for the request-reply socket.
-        :param pub_port: The port to use for the publish socket.
-        :param sub_port: The port to use for the subscribe socket.
-        :param log_root_path: The path to the root folder where the logs should be stored.
+        Create a new SnapshotServer instance.
+        
+        :param context: The zmq context.
+        :param addr: The address of the ZMQ server.
+        :param rep_port: The port number for REP (request-reply) socket connections.
+        :param pub_port: The port number for PUB (publish) socket connections.
+        :param sub_port: The port number for SUB (subscribe) socket connections.
+        :param hwm: The high water mark (HWM) for message buffering.
+        :param log_root_path: The root path for saving the snapshot logs.
         """
         self.context = context
+        self.addr = addr
         self.rep_port = rep_port
         self.pub_port = pub_port
         self.sub_port = sub_port
+        self.hwm = hwm
         self.log_root_path = log_root_path
         self.log_root_path.mkdir(parents=True, exist_ok=True)
 
@@ -52,8 +59,8 @@ class SnapshotServer:
         Server for logging snapshot data from the surgical simulation.
         """
         sub_topic_list = [b"/snapshot_request/", b"/priority_project_request/", b"/priority_project_response/"]
-        sub_socket = self.zmq_setup_socket(self.sub_port, zmq.SUB, topic_list=sub_topic_list)
-        pub_socket = self.zmq_setup_socket(self.pub_port, zmq.PUB)
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.sub_port)
         
         requestId = None
         snapshot_request = priority_project_request = priority_project_response = None
@@ -122,13 +129,13 @@ class SnapshotServer:
                 print(f"server exception: {e}")
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
 
-    def zmq_setup_socket(self, port, socket_type, topic_list=None):
+    def zmq_setup_socket(self, socket_type, port, topic_list=None):
         """ 
         ZMQ socket setup.
         """
         socket = self.context.socket(socket_type)
-        socket.hwm = 10000
-        socket.connect(f"tcp://localhost:{port}")
+        socket.hwm = self.hwm
+        socket.connect(f"tcp://{self.addr}:{port}")
         
         if topic_list:
             for topic in topic_list:
@@ -186,21 +193,32 @@ class SnapshotServer:
 
 @app.command()
 @unwrap_typer_param
-def main(
-    rep_port=typer.Argument(40120),
-    pub_port=typer.Argument(40121),
-    sub_port=typer.Argument(40122),
-):
-    print(f"rep_port: {rep_port}")
-    print(f"pub_port: {pub_port}")
-    print(f"sub_port: {sub_port}")
+def main(config_path: Path = typer.Option(config_path, help="Path to the configuration file")):
+    # Load the configuration
+    config = load_config(config_path)
+    config_network = config['network']
 
+    addr = config_network['addr_localhost']
+    rep_port = config_network['rep_port']
+    pub_port = config_network['pub_port']
+    sub_port = config_network['sub_port']
+    hwm = config_network['hwm']
+
+    print(f"""
+    [{Path(__file__).stem}]
+        addr: {addr}
+        rep_port: {rep_port}
+        pub_port: {pub_port}
+        sub_port: {sub_port}
+        hwm: {hwm}
+    """)
+    
     snapshot_logs_dir_default = Path(r"logs/sslogs") 
     snapshot_logs_dir = Path(os.environ.get("SNAPSHOT_LOG_DIR", snapshot_logs_dir_default)).resolve()
     print(f"snapshot_logs_dir: {snapshot_logs_dir}")
-
+    
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with SnapshotServer(context, rep_port, pub_port, sub_port, snapshot_logs_dir) as time_server:
+        with SnapshotServer(context, addr, rep_port, pub_port, sub_port, hwm, snapshot_logs_dir) as time_server:
             asyncio.run(time_server.start())
 
 
