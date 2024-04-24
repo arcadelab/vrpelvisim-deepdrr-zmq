@@ -1,29 +1,29 @@
 import asyncio
 import json
-import os
-
 import logging
+import os
+import sys
+import time
 from pathlib import Path
-import numpy as np
 
 import capnp
-import deepdrr
 import numpy as np
-import typer
-import zmq.asyncio
-
-from deepdrr.utils.mesh_utils import polydata_to_trimesh
-from trimesh.repair import fill_holes, fix_normals
 import pymeshfix as mf
 import pyvista as pv
+import typer
+import zmq.asyncio
+from trimesh.repair import fix_normals
 
-import sys
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
+import deepdrr
+from deepdrr.utils.mesh_utils import polydata_to_trimesh
+
+from deepdrrzmq.utils.config_util import config_path, load_config
+from deepdrrzmq.utils.server_util import messages, make_response, DeepDRRServerException, capnp_optional, capnp_square_matrix
 from deepdrrzmq.utils.typer_util import unwrap_typer_param
-from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages, capnp_square_matrix, capnp_optional
-import time
+from deepdrrzmq.utils.zmq_util import zmq_no_linger_context
 
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 

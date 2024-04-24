@@ -1,42 +1,33 @@
 import asyncio
 import io
+import logging
 import os
+import time
 from contextlib import contextmanager
+from pathlib import Path
 from typing import List
 
-import deepdrr
-from deepdrr import geo
-from deepdrr.utils import test_utils, image_utils
-from deepdrr.projector import Projector
-from PIL import Image
-import logging
-from pathlib import Path
-import numpy as np
-
-import time
-
-
 import capnp
-import deepdrr
 import numpy as np
+import pyvista as pv
 import typer
 import zmq.asyncio
 from PIL import Image
+
+import deepdrr
 from deepdrr import geo
 from deepdrr.projector import Projector
-from deepdrrzmq.utils import timer_util
+from deepdrr.utils import test_utils, image_utils
 
 from deepdrrzmq.devices import SimpleDevice
-from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
+from deepdrrzmq.instruments.KWire450mm import KWire450mm
+from deepdrrzmq.utils import timer_util
 from deepdrrzmq.utils.config_util import config_path, load_config
+from deepdrrzmq.utils.drr_util import from_nifti_cached, from_meshes_cached
+from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages
+from deepdrrzmq.utils.typer_util import unwrap_typer_param
+from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
 
-from .utils.drr_util import from_nifti_cached, from_meshes_cached
-from .utils.typer_util import unwrap_typer_param
-from .instruments.KWire450mm import KWire450mm
-
-import pyvista as pv
-
-from .utils.server_util import make_response, DeepDRRServerException, messages
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
