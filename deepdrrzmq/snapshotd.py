@@ -13,7 +13,7 @@ import zmq.asyncio
 from PIL import Image
 
 from deepdrrzmq.utils.config_util import config_path, load_config
-from deepdrrzmq.utils.server_util import make_response, DeepDRRServerException, messages
+from deepdrrzmq.utils.server_util import messages, make_response, DeepDRRServerException
 from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
 
@@ -224,8 +224,8 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
     logging.info(f"snapshot_log_dir: {snapshot_log_dir}")
     
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with SnapshotServer(context, addr, rep_port, pub_port, sub_port, hwm, snapshot_log_dir) as time_server:
-            asyncio.run(time_server.start())
+        with SnapshotServer(context, addr, rep_port, pub_port, sub_port, hwm, snapshot_log_dir) as snapshot_server:
+            asyncio.run(snapshot_server.start())
 
 
 if __name__ == '__main__':
