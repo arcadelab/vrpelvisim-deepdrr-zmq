@@ -28,6 +28,7 @@ from deepdrrzmq.utils import timer_util
 
 from deepdrrzmq.devices import SimpleDevice
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
+from deepdrrzmq.utils.config_util import config_path, load_config
 
 from .utils.drr_util import from_nifti_cached, from_meshes_cached
 from .utils.typer_util import unwrap_typer_param
@@ -37,11 +38,7 @@ import pyvista as pv
 
 from .utils.server_util import make_response, DeepDRRServerException, messages
 
-# app = typer.Typer()
 app = typer.Typer(pretty_exceptions_show_locals=False)
-
-file_path = os.path.dirname(os.path.realpath(__file__))
-
 
 
 def mesh_msg_to_volume(meshParams):
@@ -104,7 +101,6 @@ def nifti_msg_to_volume(niftiParams, patient_data_dir):
     )
     return niftiVolume
 
-
 def capnp_optional(optional):
     """
     Convert a capnp optional to a python optional.
@@ -146,19 +142,23 @@ class DeepDRRServer:
     - managing the projector
     - managing the volumes
     """
-    def __init__(self, context, rep_port, pub_port, sub_port):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm):
         """
         Create a new DeepDRR server.
         
         :param context: The zmq context.
-        :param rep_port: The port to use for the request-reply socket.
-        :param pub_port: The port to use for the publish socket.
-        :param sub_port: The port to use for the subscribe socket.
+        :param addr: The address of the ZMQ server.
+        :param rep_port: The port number for REP (request-reply) socket connections.
+        :param pub_port: The port number for PUB (publish) socket connections.
+        :param sub_port: The port number for SUB (subscribe) socket connections.
+        :param hwm: The high water mark (HWM) for message buffering.
         """
         self.context = context
+        self.addr = addr
         self.rep_port = rep_port
         self.pub_port = pub_port
         self.sub_port = sub_port
+        self.hwm = hwm
 
         self.disable_until = 0
 
@@ -192,19 +192,9 @@ class DeepDRRServer:
         """
         Project server that handles requests from the client and sends responses.
         """
-        sub_socket = self.context.socket(zmq.SUB)
-        sub_socket.hwm = 10000
-
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-        sub_socket.connect(f"tcp://localhost:{self.sub_port}")
-
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/priority_project_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/project_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/projector_params_response/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/deepdrrd/in/")
+        sub_topic_list = [b"/priority_project_request/", b"/project_request/", b"/projector_params_response/", b"/deepdrrd/in/"]
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
 
@@ -248,6 +238,18 @@ class DeepDRRServer:
                     logging.exception(e.subexception)
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
 
+    def zmq_setup_socket(self, socket_type, port, topic_list=None):
+        """ 
+        ZMQ socket setup.
+        """
+        socket = self.context.socket(socket_type)
+        socket.hwm = self.hwm
+        socket.connect(f"tcp://{self.addr}:{port}")
+        
+        if topic_list:
+            for topic in topic_list:
+                socket.subscribe(topic)
+        return socket
 
     def __enter__(self):
         return self
@@ -445,9 +447,9 @@ class DeepDRRServer:
         Server for sending the status of the DRR projector.
         """
         pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
+        pub_socket.hwm = self.hwm
 
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+        pub_socket.connect(f"tcp://{self.addr}:{self.pub_port}")
 
         while True:
             await asyncio.sleep(1)
@@ -469,24 +471,34 @@ class DeepDRRServer:
             msg.status = "Loaded"
         msg.projectorId = self.projector_id
         await pub_socket.send_multipart([b"/projector_heartbeat/", msg.to_bytes()])
-    
 
 
 @app.command()
 @unwrap_typer_param
-def main(
-        rep_port=typer.Argument(40120),
-        pub_port=typer.Argument(40121),
-        sub_port=typer.Argument(40122),
-):
-    print(f"rep_port: {rep_port}")
-    print(f"pub_port: {pub_port}")
-    print(f"sub_port: {sub_port}")
+def main(config_path: Path = typer.Option(config_path, help="Path to the configuration file")):
+    # Load the configuration
+    config = load_config(config_path)
+    config_network = config['network']
+
+    addr = config_network['addr_localhost']
+    rep_port = config_network['rep_port']
+    pub_port = config_network['pub_port']
+    sub_port = config_network['sub_port']
+    hwm = config_network['hwm']
+
+    print(f"""
+    [deepdrrd]
+        addr: {addr}
+        rep_port: {rep_port}
+        pub_port: {pub_port}
+        sub_port: {sub_port}
+        hwm: {hwm}
+    """)
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with DeepDRRServer(context, rep_port, pub_port, sub_port) as deepdrr_server:
+        with DeepDRRServer(context, addr, rep_port, pub_port, sub_port, hwm) as deepdrr_server:
             asyncio.run(deepdrr_server.start())
-
+        
 
 if __name__ == '__main__':
     app()
