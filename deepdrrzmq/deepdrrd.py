@@ -142,7 +142,7 @@ class DeepDRRServer:
     - managing the projector
     - managing the volumes
     """
-    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm, patient_data_dir):
         """
         Create a new DeepDRR server instance.
         
@@ -152,6 +152,7 @@ class DeepDRRServer:
         :param pub_port: The port number for PUB (publish) socket connections.
         :param sub_port: The port number for SUB (subscribe) socket connections.
         :param hwm: The high water mark (HWM) for message buffering.
+        :param patient_data_dir: The directory containing the patient data.
         """
         self.context = context
         self.addr = addr
@@ -159,6 +160,7 @@ class DeepDRRServer:
         self.pub_port = pub_port
         self.sub_port = sub_port
         self.hwm = hwm
+        self.patient_data_dir = patient_data_dir
 
         self.disable_until = 0
 
@@ -171,13 +173,6 @@ class DeepDRRServer:
         self.fps = timer_util.FPS(1) # FPS counter for projector
         
         self.priority_request_queue = []    # queue for priority requests
-        
-        # PATIENT_DATA_DIR environment variable is set by the docker container
-        # patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
-        patient_data_dir_default = Path("/home/virtualpelvislab/datasets/NMDID-ARCADE")
-        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", patient_data_dir_default))
-        print(f"patient data dir: {self.patient_data_dir}")
-        logging.info(f"patient data dir: {self.patient_data_dir}")
 
     async def start(self):
         """
@@ -479,12 +474,18 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
     # Load the configuration
     config = load_config(config_path)
     config_network = config['network']
+    config_dirs = config['dirs']
 
     addr = config_network['addr_localhost']
     rep_port = config_network['rep_port']
     pub_port = config_network['pub_port']
     sub_port = config_network['sub_port']
     hwm = config_network['hwm']
+    
+    # PATIENT_DATA_DIR environment variable is set by the docker container
+    # default_patient_data_dir = config_dirs['default_patient_data_dir']
+    default_patient_data_dir = config_dirs['default_patient_data_dir_local']
+    patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_patient_data_dir))
 
     print(f"""
     [{Path(__file__).stem}]
@@ -493,13 +494,15 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
         pub_port: {pub_port}
         sub_port: {sub_port}
         hwm: {hwm}
+        default_patient_data_dir: {default_patient_data_dir}
+        patient_data_dir: {patient_data_dir}
     """)
+    logging.info(f"patient_data_dir: {patient_data_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with DeepDRRServer(context, addr, rep_port, pub_port, sub_port, hwm) as deepdrr_server:
+        with DeepDRRServer(context, addr, rep_port, pub_port, sub_port, hwm, patient_data_dir) as deepdrr_server:
             asyncio.run(deepdrr_server.start())
         
 
 if __name__ == '__main__':
     app()
-

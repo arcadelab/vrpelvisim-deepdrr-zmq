@@ -6,6 +6,11 @@
       "pub_port": 40121,
       "sub_port": 40122,
       "hwm": 10000
+    },
+    "dirs": {
+      "default_patient_data_dir": "/nfs/centipede/liam/OneDrive/NMDID-ARCADE",
+      "default_patient_data_dir_local": "/home/virtualpelvislab/datasets/NMDID-ARCADE",
+      "default_snapshot_log_dir": "/logs/sslogs"
     }
 }
   
