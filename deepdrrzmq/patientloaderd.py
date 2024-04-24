@@ -33,7 +33,7 @@ class PatientLoaderServer:
     The server is used to load data from the patient loader service. It
     uses the ZeroMQ REQ/REP pattern to handle requests from the client.
     """
-    def __init__(self, context, rep_port, pub_port, sub_port):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm, patient_data_dir):
         """
         :param context: The ZMQ context to use for creating sockets.
         :param rep_port: The port to use for the request/reply socket.
@@ -41,32 +41,27 @@ class PatientLoaderServer:
         :param sub_port: The port to use for the subscriber socket.
         """
         self.context = context
+        self.addr = addr
         self.rep_port = rep_port
         self.pub_port = pub_port
         self.sub_port = sub_port
+        self.hwm = hwm
+        self.patient_data_dir = patient_data_dir
 
-        # PATIENT_DATA_DIR environment variable is set by the docker container
-        # patient_data_dir_default = Path("/nfs/centipede/liam/OneDrive/NMDID-ARCADE")
-        patient_data_dir_default = Path("/home/virtualpelvislab/datasets/NMDID-ARCADE")
-        self.patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", patient_data_dir_default))
-        logging.info(f"patient_data_dir: {self.patient_data_dir}")
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
 
     async def start(self):
-        project = self.project_server()
-        await asyncio.gather(project)
+        project_server_processor = asyncio.create_task(self.project_server())
+        await asyncio.gather(project_server_processor)
 
     async def project_server(self):
-        sub_socket = self.context.socket(zmq.SUB)
-        sub_socket.hwm = 10000
-
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-        sub_socket.connect(f"tcp://localhost:{self.sub_port}")
-
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/patient_mesh_request/")
-        sub_socket.setsockopt(zmq.SUBSCRIBE, b"/patient_anno_request/")
+        sub_topic_list = [b"/patient_mesh_request/", b"/patient_anno_request/"]
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             try:
@@ -86,11 +81,18 @@ class PatientLoaderServer:
                 print(f"server exception: {e}")
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+    def zmq_setup_socket(self, socket_type, port, topic_list=None):
+        """ 
+        ZMQ socket setup.
+        """
+        socket = self.context.socket(socket_type)
+        socket.hwm = self.hwm
+        socket.connect(f"tcp://{self.addr}:{port}")
+        
+        if topic_list:
+            for topic in topic_list:
+                socket.subscribe(topic)
+        return socket
 
     async def handle_patient_mesh_request(self, pub_socket, data):
         """
@@ -153,7 +155,6 @@ class PatientLoaderServer:
             await pub_socket.send_multipart([response_topic.encode(), msg.to_bytes()])
             print(f"sent mesh response {response_topic}")
 
-
     async def handle_patient_annotation_request(self, pub_socket, data):
         """
         Handle a patient annotation request. This method is called when a message is received on the
@@ -201,24 +202,40 @@ class PatientLoaderServer:
 
 @app.command()
 @unwrap_typer_param
-def main(
-        # ip=typer.Argument('localhost', help="ip address of the receiver"),
-        rep_port=typer.Argument(40120),
-        pub_port=typer.Argument(40121),
-        sub_port=typer.Argument(40122),
-        # bind=typer.Option(True, help="bind to the port instead of connecting to it"),
-):
+def main(config_path: Path = typer.Option(config_path, help="Path to the configuration file")):
+    # Load the configuration
+    config = load_config(config_path)
+    config_network = config['network']
+    config_dirs = config['dirs']
 
-    # print arguments
-    print(f"rep_port: {rep_port}")
-    print(f"pub_port: {pub_port}")
-    print(f"sub_port: {sub_port}")
+    addr = config_network['addr_localhost']
+    rep_port = config_network['rep_port']
+    pub_port = config_network['pub_port']
+    sub_port = config_network['sub_port']
+    hwm = config_network['hwm']
+    
+    # PATIENT_DATA_DIR environment variable is set by the docker container
+    # default_patient_data_dir = config_dirs['default_patient_data_dir']
+    default_patient_data_dir = config_dirs['default_patient_data_dir_local']
+    patient_data_dir = Path(os.environ.get("PATIENT_DATA_DIR", default_patient_data_dir))
+
+    print(f"""
+    [{Path(__file__).stem}]
+        addr: {addr}
+        rep_port: {rep_port}
+        pub_port: {pub_port}
+        sub_port: {sub_port}
+        hwm: {hwm}
+        default_patient_data_dir: {default_patient_data_dir}
+        patient_data_dir: {patient_data_dir}
+    """)
+    logging.info(f"patient_data_dir: {patient_data_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with PatientLoaderServer(context, rep_port, pub_port, sub_port) as patient_loader_server:
+        with PatientLoaderServer(context, addr, rep_port, pub_port, sub_port, hwm, patient_data_dir) as patient_loader_server:
             asyncio.run(patient_loader_server.start())
-
-
+            
+    
 if __name__ == '__main__':
     app()
 

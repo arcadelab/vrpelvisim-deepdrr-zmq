@@ -165,14 +165,20 @@ class DeepDRRServer:
         
         self.priority_request_queue = []    # queue for priority requests
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.projector is not None:
+            self.projector.__exit__(exc_type, exc_value, traceback)
+
     async def start(self):
         """
         Start the server.
         """
-
-        project = self.project_server()
-        status_loop = self.status_server()
-        await asyncio.gather(project, status_loop)
+        project_server_processor = asyncio.create_task(self.project_server())
+        status_server_processor = asyncio.create_task(self.status_server())
+        await asyncio.gather(project_server_processor, status_server_processor)
 
     async def project_server(self):
         """
@@ -236,13 +242,6 @@ class DeepDRRServer:
             for topic in topic_list:
                 socket.subscribe(topic)
         return socket
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if self.projector is not None:
-            self.projector.__exit__(exc_type, exc_value, traceback)
 
     async def handle_projector_params_response(self, pub_socket, data):
         """
