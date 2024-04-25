@@ -50,7 +50,7 @@ class TimeServer:
     async def command_loop(self):
         sub_topic_list = [b"/timed/in/"]
         sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
-        pub_socket = self.zmq_setup_socket(zmq.PUB, self.sub_port)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             try:
@@ -67,7 +67,7 @@ class TimeServer:
 
     async def time_server(self):
         sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port)
-        pub_socket = self.zmq_setup_socket(zmq.PUB, self.sub_port)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             if time.time() > self.disable_until:

@@ -62,7 +62,7 @@ class SnapshotServer:
         """
         sub_topic_list = [b"/snapshot_request/", b"/priority_project_request/", b"/priority_project_response/"]
         sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
-        pub_socket = self.zmq_setup_socket(zmq.PUB, self.sub_port)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
         
         requestId = None
         snapshot_request = priority_project_request = priority_project_response = None
