@@ -12,7 +12,9 @@
     "dirs": {
       "default_patient_data_dir": "/nfs/centipede/liam/OneDrive/NMDID-ARCADE",
       "default_patient_data_dir_local": "/home/virtualpelvislab/datasets/NMDID-ARCADE",
-      "default_snapshot_log_dir": "/logs/sslogs"
+      "default_log_dir": "/logs",
+      "default_snapshot_log_dir": "/logs/sslogs",
+      "default_vrps_log_dir": "logs/vrpslogs"
     }
 }
   

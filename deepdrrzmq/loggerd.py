@@ -1,23 +1,23 @@
 import asyncio
-import os
-
 import logging
+import os
+import random
+import string
+import time
 from pathlib import Path
 
 import capnp
 import typer
 import zmq.asyncio
-import time
+
+from deepdrrzmq.utils.config_util import config_path, load_config
+from deepdrrzmq.utils.server_util import messages, make_response, DeepDRRServerException
+from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
 
-from .utils.typer_util import unwrap_typer_param
-from .utils.server_util import make_response, DeepDRRServerException, messages
-import random
-import string
 
-
-# app = typer.Typer()
 app = typer.Typer(pretty_exceptions_show_locals=False)
+
 
 class LogWriter:
     """
@@ -25,7 +25,6 @@ class LogWriter:
     """
     def __init__(self, fileobj):
         self.filestream = fileobj
-        # self.filestream = log_file_path.open("wb")
 
     def __enter__(self):
         return self
@@ -38,6 +37,7 @@ class LogWriter:
 
     def write(self, data):
         return self.filestream.write(data)
+
 
 class LogShardWriter:
     """
@@ -195,44 +195,44 @@ class LogRecorder:
     def __exit__(self, *args, **kw):
         self.close()
 
+
 class LoggerServer:
     """
     Server for logging data from the surgical simulation.
     """
-    def __init__(self, context, rep_port, pub_port, sub_port, log_root_path):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm, log_dir):
         """
-        :param context: The zmq context to use.
-        :param rep_port: The port to use for the request-reply socket.
-        :param pub_port: The port to use for the publish socket.
-        :param sub_port: The port to use for the subscribe socket.
-        :param log_root_path: The path to the root folder where the logs should be stored.
+        Create a new LoggerServer instance.
+        
+        :param context: The zmq context.
+        :param addr: The address of the ZMQ server.
+        :param rep_port: The port number for REP (request-reply) socket connections.
+        :param pub_port: The port number for PUB (publish) socket connections.
+        :param sub_port: The port number for SUB (subscribe) socket connections.
+        :param hwm: The high water mark (HWM) for message buffering.
+        :param log_dir: The directory for saving the logger logs.
         """
         self.context = context
+        self.addr = addr
         self.rep_port = rep_port
         self.pub_port = pub_port
         self.sub_port = sub_port
-        self.log_root_path = log_root_path
-        self.log_recorder = LogRecorder(log_root_path, maxcount = 1e15, maxsize = 100e6)
+        self.hwm = hwm
+        self.log_dir = log_dir
+        self.log_recorder = LogRecorder(log_dir, maxcount = 1e15, maxsize = 100e6)
 
     async def start(self):
-        recorder_loop = self.logger_server()
-        status_loop = self.status_server()
-        await asyncio.gather(recorder_loop, status_loop)
+        recording_logger_processor = asyncio.create_task(self.recording_logger_server())
+        status_processor = asyncio.create_task(self.status_server())
+        await asyncio.gather(recording_logger_processor, status_processor)
 
-    async def logger_server(self):
+    async def recording_logger_server(self):
         """
-        Server for logging data from the surgical simulation.
+        Server for logging recording data from the surgical simulation.
         """
-        sub_socket = self.context.socket(zmq.SUB)
-        sub_socket.hwm = 10000
-
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-        sub_socket.connect(f"tcp://localhost:{self.sub_port}")
-
-        sub_socket.subscribe(b"")
+        sub_topic_list = [b""]
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         with self.log_recorder as log_file:
             while True:
@@ -259,15 +259,12 @@ class LoggerServer:
                     print(f"server exception: {e}")
                     await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])
 
-
     async def status_server(self):
         """
         Server for sending the status of the logger.
         """
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             await asyncio.sleep(1)
@@ -275,7 +272,19 @@ class LoggerServer:
             msg.recording = self.log_recorder.session_id is not None
             msg.sessionId = self.log_recorder.session_id or ""
             await pub_socket.send_multipart([b"/loggerd/status/", msg.to_bytes()])
-
+            
+    def zmq_setup_socket(self, socket_type, port, topic_list=None):
+        """ 
+        ZMQ socket setup.
+        """
+        socket = self.context.socket(socket_type)
+        socket.hwm = self.hwm
+        socket.connect(f"tcp://{self.addr}:{port}")
+        
+        if topic_list:
+            for topic in topic_list:
+                socket.subscribe(topic)
+        return socket
 
     def __enter__(self):
         return self
@@ -284,26 +293,60 @@ class LoggerServer:
         pass
 
 
+# @app.command()
+# @unwrap_typer_param
+# def main(
+#     rep_port=typer.Argument(40120),
+#     pub_port=typer.Argument(40121),
+#     sub_port=typer.Argument(40122),
+# ):
+#     print(f"rep_port: {rep_port}")
+#     print(f"pub_port: {pub_port}")
+#     print(f"sub_port: {sub_port}")
+
+#     default_vrps_log_dir = Path(r"logs/vrpslogs")
+#     vrps_log_dir = Path(os.environ.get("REPLAY_LOG_DIR", default_vrps_log_dir)).resolve()
+#     print(f"logger vrps_logs_dir: {vrps_log_dir}")
+
+#     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
+#         with LoggerServer(context, rep_port, pub_port, sub_port, vrps_log_dir) as time_server:
+#             asyncio.run(time_server.start())
+
+
 @app.command()
 @unwrap_typer_param
-def main(
-    rep_port=typer.Argument(40120),
-    pub_port=typer.Argument(40121),
-    sub_port=typer.Argument(40122),
-):
-    print(f"rep_port: {rep_port}")
-    print(f"pub_port: {pub_port}")
-    print(f"sub_port: {sub_port}")
+def main(config_path: Path = typer.Option(config_path, help="Path to the configuration file")):
+    # Load the configuration
+    config = load_config(config_path)
+    config_network = config['network']
+    config_dirs = config['dirs']
 
-    vrps_logs_dir_default = Path(r"logs/vrpslogs")
-    vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
-    print(f"logger vrps_logs_dir: {vrps_logs_dir}")
+    addr = config_network['addr_localhost']
+    rep_port = config_network['rep_port']
+    pub_port = config_network['pub_port']
+    sub_port = config_network['sub_port']
+    hwm = config_network['hwm']
+    
+    # REPLAY_LOG_DIR environment variable is set by the docker container
+    default_vrps_log_dir = config_dirs['default_vrps_log_dir']
+    vrps_log_dir = Path(os.environ.get("REPLAY_LOG_DIR", default_vrps_log_dir)).resolve()
 
+    print(f"""
+    [{Path(__file__).stem}]
+        addr: {addr}
+        rep_port: {rep_port}
+        pub_port: {pub_port}
+        sub_port: {sub_port}
+        hwm: {hwm}
+        default_vrps_log_dir: {default_vrps_log_dir}
+        vrps_log_dir: {vrps_log_dir}
+    """)
+    logging.info(f"vrps_log_dir: {vrps_log_dir}")
+    
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with LoggerServer(context, rep_port, pub_port, sub_port, vrps_logs_dir) as time_server:
-            asyncio.run(time_server.start())
-
+        with LoggerServer(context, addr, rep_port, pub_port, sub_port, hwm, vrps_log_dir) as logger_server:
+            asyncio.run(logger_server.start())
+            
 
 if __name__ == '__main__':
     app()
-
