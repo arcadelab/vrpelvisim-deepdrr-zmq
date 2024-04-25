@@ -487,7 +487,7 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
         default_patient_data_dir: {default_patient_data_dir}
         patient_data_dir: {patient_data_dir}
     """)
-    logging.info(f"patient_data_dir: {patient_data_dir}")
+    logging.info(f"[{Path(__file__).stem}] patient_data_dir: {patient_data_dir}")
 
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
         with DeepDRRServer(context, addr, rep_port, pub_port, sub_port, hwm, patient_data_dir) as deepdrr_server:

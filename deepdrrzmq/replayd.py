@@ -1,27 +1,20 @@
 import asyncio
-import os
-
 import logging
+import os
+import time
 from pathlib import Path
 
 import capnp
 import typer
 import zmq.asyncio
-import time
+
+from deepdrrzmq.utils.config_util import config_path, load_config
+from deepdrrzmq.utils.server_util import messages, make_response, DeepDRRServerException
+from deepdrrzmq.utils.typer_util import unwrap_typer_param
 from deepdrrzmq.utils.zmq_util import zmq_no_linger_context, zmq_poll_latest
 
-from .utils.typer_util import unwrap_typer_param
-from .utils.server_util import make_response, DeepDRRServerException, messages
 
-
-
-# app = typer.Typer()
 app = typer.Typer(pretty_exceptions_show_locals=False)
-
-excluded_prefixes = [
-    b"/loggerd/",
-    b"/replayd/",
-]
 
 
 class LogReplayer:
@@ -124,12 +117,26 @@ class LogReplayer:
 
 
 class LogReplayServer:
-    def __init__(self, context, rep_port, pub_port, sub_port, log_root_path):
+    def __init__(self, context, addr, rep_port, pub_port, sub_port, hwm, log_dir):
+        """
+        Create a new LoggerServer instance.
+        
+        :param context: The zmq context.
+        :param addr: The address of the ZMQ server.
+        :param rep_port: The port number for REP (request-reply) socket connections.
+        :param pub_port: The port number for PUB (publish) socket connections.
+        :param sub_port: The port number for SUB (subscribe) socket connections.
+        :param hwm: The high water mark (HWM) for message buffering.
+        :param log_dir: The directory for saving the logger logs.
+        """
         self.context = context
+        self.addr = addr
         self.rep_port = rep_port
         self.pub_port = pub_port
         self.sub_port = sub_port
-        self.log_root_path = log_root_path
+        self.hwm = hwm
+        self.log_dir = log_dir
+        
         self.log_replayer = None
         self._play_state = False
         self.log_id = None
@@ -143,7 +150,7 @@ class LogReplayServer:
     @property
     def pathes_sorted_mtime(self):
         if self._pathes_sorted_mtime is None:
-            pathes = list(Path(self.log_root_path).glob("*"))
+            pathes = list(Path(self.log_dir).glob("*"))
             self._pathes_sorted_mtime = [p for p in sorted(pathes, key=os.path.getmtime) if p.is_dir()]
         return self._pathes_sorted_mtime
     
@@ -168,25 +175,23 @@ class LogReplayServer:
             self.log_time_offset = None
 
     async def start(self):
+        command_loop_processor = asyncio.create_task(self.command_loop())
+        status_loop_processor = asyncio.create_task(self.status_loop())
+        loglist_loop_processor = asyncio.create_task(self.loglist_loop())
+        replay_loop_processor = asyncio.create_task(self.replay_loop())
+        blocker_loop_processor = asyncio.create_task(self.blocker_loop())
         await asyncio.gather(
-            self.command_loop(),
-            self.status_loop(),
-            self.loglist_loop(),
-            self.replay_loop(),
-            self.blocker_loop()
+            command_loop_processor, 
+            status_loop_processor, 
+            loglist_loop_processor, 
+            replay_loop_processor, 
+            blocker_loop_processor
         )
 
     async def command_loop(self):
-        sub_socket = self.context.socket(zmq.SUB)
-        sub_socket.hwm = 10000
-
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-        sub_socket.connect(f"tcp://localhost:{self.sub_port}")
-
-        sub_socket.subscribe(b"/replayd/in/")
+        sub_topic_list = [b"/replayd/in/"]
+        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port, topic_list=sub_topic_list)
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             try:
@@ -212,7 +217,7 @@ class LogReplayServer:
                         if msg.logId not in [p.name for p in self.pathes_sorted_mtime]:
                             raise DeepDRRServerException(400, f"log {msg.logId} not found")
                         self.log_id = msg.logId
-                        self.log_replayer = LogReplayer(Path(self.log_root_path) / msg.logId)
+                        self.log_replayer = LogReplayer(Path(self.log_dir) / msg.logId)
                         # self.log_replayer.seek_time(msg.startTime)
                         # self.log_replayer.loop = msg.loop
                         self.loop = msg.loop
@@ -252,10 +257,7 @@ class LogReplayServer:
         self.play_state = prev_play_state
 
     async def status_loop(self):
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             if not self.enabled:
@@ -278,10 +280,7 @@ class LogReplayServer:
                 # print(f"replayd status: {self.playback_time=} {msg.playing} {msg.time} {msg.logId} {msg.startTime} {msg.endTime} {msg.loop} {self.log_replayer=} {self.log_time_offset=}")
 
     async def loglist_loop(self):
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
             await asyncio.sleep(5)
@@ -295,16 +294,15 @@ class LogReplayServer:
                 await pub_socket.send_multipart([b"/replayd/list/", msg.to_bytes()])
 
     async def replay_loop(self):
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
-
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         print("-"*20)
         i = 0
 
         def play_condition():
             return self.play_state and self.log_replayer is not None
+        
+        excluded_prefixes = [b"/loggerd/", b"/replayd/"]
         
         while True:
             while not self.enabled:
@@ -345,15 +343,9 @@ class LogReplayServer:
             await asyncio.sleep(0.01)
             
     async def blocker_loop(self):
-        pub_socket = self.context.socket(zmq.PUB)
-        pub_socket.hwm = 10000
+        pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
-        pub_socket.connect(f"tcp://localhost:{self.pub_port}")
-
-        block_list = [
-            "deepdrrd",
-            "timed"
-        ]
+        block_list = ["deepdrrd", "timed"]
 
         while True:
             while not self.enabled:
@@ -362,7 +354,19 @@ class LogReplayServer:
                 await pub_socket.send_multipart([f"/{block}/in/block/".encode(), b""])
             await asyncio.sleep(5)
 
-
+    def zmq_setup_socket(self, socket_type, port, topic_list=None):
+        """ 
+        ZMQ socket setup.
+        """
+        socket = self.context.socket(socket_type)
+        socket.hwm = self.hwm
+        socket.connect(f"tcp://{self.addr}:{port}")
+        
+        if topic_list:
+            for topic in topic_list:
+                socket.subscribe(topic)
+        return socket
+    
     def __enter__(self):
         return self
 
@@ -370,27 +374,60 @@ class LogReplayServer:
         pass
 
 
+# @app.command()
+# @unwrap_typer_param
+# def main(
+#     rep_port=typer.Argument(40120),
+#     pub_port=typer.Argument(40121),
+#     sub_port=typer.Argument(40122),
+# ):
+#     print(f"rep_port: {rep_port}")
+#     print(f"pub_port: {pub_port}")
+#     print(f"sub_port: {sub_port}")
+
+#     vrps_logs_dir_default = Path(r"logs/vrpslogs")
+#     vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
+#     print(f"replay vrps_logs_dir: {vrps_logs_dir}")
+
+#     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
+#         with LogReplayServer(context, rep_port, pub_port, sub_port, vrps_logs_dir) as time_server:
+#             asyncio.run(time_server.start())
 
 
 @app.command()
 @unwrap_typer_param
-def main(
-    rep_port=typer.Argument(40120),
-    pub_port=typer.Argument(40121),
-    sub_port=typer.Argument(40122),
-):
-    print(f"rep_port: {rep_port}")
-    print(f"pub_port: {pub_port}")
-    print(f"sub_port: {sub_port}")
+def main(config_path: Path = typer.Option(config_path, help="Path to the configuration file")):
+    # Load the configuration
+    config = load_config(config_path)
+    config_network = config['network']
+    config_dirs = config['dirs']
 
-    vrps_logs_dir_default = Path(r"logs/vrpslogs")
-    vrps_logs_dir = Path(os.environ.get("REPLAY_LOG_DIR", vrps_logs_dir_default)).resolve()
-    print(f"replay vrps_logs_dir: {vrps_logs_dir}")
+    addr = config_network['addr_localhost']
+    rep_port = config_network['rep_port']
+    pub_port = config_network['pub_port']
+    sub_port = config_network['sub_port']
+    hwm = config_network['hwm']
+    
+    # REPLAY_LOG_DIR environment variable is set by the docker container
+    default_vrps_log_dir = config_dirs['default_vrps_log_dir']
+    vrps_log_dir = Path(os.environ.get("REPLAY_LOG_DIR", default_vrps_log_dir)).resolve()
 
+    print(f"""
+    [{Path(__file__).stem}]
+        addr: {addr}
+        rep_port: {rep_port}
+        pub_port: {pub_port}
+        sub_port: {sub_port}
+        hwm: {hwm}
+        default_vrps_log_dir: {default_vrps_log_dir}
+        vrps_log_dir: {vrps_log_dir}
+    """)
+    logging.info(f"[{Path(__file__).stem}] vrps_log_dir: {vrps_log_dir}")
+    
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-        with LogReplayServer(context, rep_port, pub_port, sub_port, vrps_logs_dir) as time_server:
-            asyncio.run(time_server.start())
-
+        with LogReplayServer(context, addr, rep_port, pub_port, sub_port, hwm, vrps_log_dir) as replay_server:
+            asyncio.run(replay_server.start())
+            
 
 if __name__ == '__main__':
     app()

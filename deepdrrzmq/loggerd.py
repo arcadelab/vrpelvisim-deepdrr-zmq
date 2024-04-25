@@ -219,6 +219,7 @@ class LoggerServer:
         self.sub_port = sub_port
         self.hwm = hwm
         self.log_dir = log_dir
+        
         self.log_recorder = LogRecorder(log_dir, maxcount = 1e15, maxsize = 100e6)
 
     async def start(self):
@@ -320,7 +321,7 @@ def main(config_path: Path = typer.Option(config_path, help="Path to the configu
         default_vrps_log_dir: {default_vrps_log_dir}
         vrps_log_dir: {vrps_log_dir}
     """)
-    logging.info(f"vrps_log_dir: {vrps_log_dir}")
+    logging.info(f"[{Path(__file__).stem}] vrps_log_dir: {vrps_log_dir}")
     
     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
         with LoggerServer(context, addr, rep_port, pub_port, sub_port, hwm, vrps_log_dir) as logger_server:
