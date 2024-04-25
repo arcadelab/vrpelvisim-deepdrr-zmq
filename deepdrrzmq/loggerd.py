@@ -263,7 +263,6 @@ class LoggerServer:
         """
         Server for sending the status of the logger.
         """
-        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port)
         pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
@@ -291,26 +290,6 @@ class LoggerServer:
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
-
-
-# @app.command()
-# @unwrap_typer_param
-# def main(
-#     rep_port=typer.Argument(40120),
-#     pub_port=typer.Argument(40121),
-#     sub_port=typer.Argument(40122),
-# ):
-#     print(f"rep_port: {rep_port}")
-#     print(f"pub_port: {pub_port}")
-#     print(f"sub_port: {sub_port}")
-
-#     default_vrps_log_dir = Path(r"logs/vrpslogs")
-#     vrps_log_dir = Path(os.environ.get("REPLAY_LOG_DIR", default_vrps_log_dir)).resolve()
-#     print(f"logger vrps_logs_dir: {vrps_log_dir}")
-
-#     with zmq_no_linger_context(zmq.asyncio.Context()) as context:
-#         with LoggerServer(context, rep_port, pub_port, sub_port, vrps_log_dir) as time_server:
-#             asyncio.run(time_server.start())
 
 
 @app.command()

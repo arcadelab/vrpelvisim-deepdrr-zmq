@@ -66,7 +66,6 @@ class TimeServer:
                 await pub_socket.send_multipart([b"/server_exception/", e.status_response().to_bytes()])     
 
     async def time_server(self):
-        sub_socket = self.zmq_setup_socket(zmq.SUB, self.sub_port)
         pub_socket = self.zmq_setup_socket(zmq.PUB, self.pub_port)
 
         while True:
